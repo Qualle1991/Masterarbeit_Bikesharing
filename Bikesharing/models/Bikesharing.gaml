@@ -8,9 +8,9 @@ model Bikesharing
 
 global {
 
-//ENVIRONMENT
+	//ENVIRONMENT
 	float step <- 10 #mn update: 10 #mn;
-	date starting_date <- date([2018, 10, 1, 0, 0]);
+	date starting_date <- date([2020, 4, 1, 0, 0]);
 	string case_study <- "EBW";
 	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 100 max: 1000;
 	int nb_pendler <- 100 parameter: "Anzahl der Pendler: " min: 100 max: 1000;

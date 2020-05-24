@@ -671,51 +671,33 @@ species people skills: [moving] {
 
 	}
 
-	//Move according to the selected mobility mode (bus and shared_bike are seperated):
-	reflex move when: (my_current_objective != nil) and (mobility_mode != "bus") and (mobility_mode != "shared_bike") {
-
-	
-		if ((current_edge != nil) and (mobility_mode in ["car"]))
-		{
+	reflex move when: (my_current_objective != nil) and (mobility_mode != "bus") {
+		if ((current_edge != nil) and (mobility_mode in ["car"])) {
 			road(current_edge).current_concentration <- max([0, road(current_edge).current_concentration - 1]);
 		}
-		  
+
 		if (mobility_mode in ["car"]) {
-		//do goto target:(road with_min_of (each distance_to (self)));
 			do goto target: my_current_objective.place.location on: graph_per_mobility[mobility_mode] move_weights: congestion_map;
-			counter_rides <- counter_rides + 1;
-
 		} else {
-		//do goto target:(road with_min_of (each distance_to (self)));
 			do goto target: my_current_objective.place.location on: graph_per_mobility[mobility_mode];
-			counter_rides <- counter_rides + 1;
-
 		}
 
-		if (self.location = my_current_objective.place.location) {
+		if (location = my_current_objective.place.location) {
+			if (mobility_mode = "car" and updatePollution = true) {
+				do updatePollutionMap;
+			}
+
 			current_place <- my_current_objective.place;
 			location <- any_location_in(current_place);
 			my_current_objective <- nil;
-			closest_bus_stop <- bus_stop with_min_of (each distance_to (self));
-			closest_sharing_station <- sharing_station with_min_of (each distance_to (self));
-			if (mobility_mode in ["car", "bike"]) {
-				vehicle_in_use <- mobility_mode;
-
-			}
-			add mobility_mode to: latest_modes;
 			mobility_mode <- nil;
-			counter_succeeded <- counter_succeeded + 1;
-		}
-		//TODO: What is happening here?
-		else
-		{
-			if ((current_edge != nil) and (mobility_mode in ["car"]))
-			{
+		} else {
+			if ((current_edge != nil) and (mobility_mode in ["car"])) {
 				road(current_edge).current_concentration <- road(current_edge).current_concentration + 1;
 			}
 
 		}
-		
+
 	}
 
 	reflex move_bus when: (my_current_objective != nil) and (mobility_mode = "bus") {

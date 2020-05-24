@@ -888,26 +888,6 @@ species externalCities parent: building {
 }
 
 experiment "Starte Szenario" type: gui {
-	user_command "all roads to pedestrian" {
-		write congestion_map;
-		ask road {
-			do to_pedestrian_road_ext;
-		}
-
-		write "user_command executed";
-		write congestion_map;
-	}
-
-	user_command "all roads to normal" {
-		write congestion_map;
-		ask road {
-			do to_normal_road_ext;
-		}
-
-		write "user_command executed";
-		write congestion_map;
-	}
-
 	output {
 		display map type: opengl refresh: every(1 #cycle) draw_env: false background: #black #zoom //refresh: every(#hour)
 		{

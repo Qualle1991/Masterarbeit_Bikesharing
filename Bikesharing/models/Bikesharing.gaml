@@ -636,26 +636,36 @@ species people skills: [moving] {
 		return candidates;
 	}
 
+	//Choosing the means of transport:
 	reflex choose_objective when: my_current_objective = nil {
-	//location <- any_location_in(current_place);
+	//Person is moving around if not sleeping and not home:
 		if current_date.hour != 0 and current_date.hour != 1 and current_date.hour != 2 and current_date.hour != 3 and current_date.hour != 4 and current_date.hour != 5 and
 		current_date.hour != 23 and current_place != living_place {
 			do wander speed: 0.002;
 		}
 
+		//Set current objective and possible mobility_modes:
 		my_current_objective <- objectives first_with ((each.starting_hour = current_date.hour) and (current_date.minute >= each.starting_minute) and (current_place != each.place));
 		if (my_current_objective != nil) {
-			current_place <- nil;
-			possible_mobility_modes <- ["walking"];
-			if (has_car) {
+			possible_mobility_modes <- nil;
+			if (vehicle_in_use = nil) {
+				possible_mobility_modes << "walking";
+				possible_mobility_modes << "bus";
+				//Shared bike has to be available: 
+				if (has_bikesharing and (length(self.closest_sharing_station.parked_bikes) > 0)) {
+					possible_mobility_modes << "shared_bike";
+				}
+
+			}
+			//The car has to be with the person:
+			if (has_car and vehicle_in_use = "car") or (has_car and current_place = living_place) {
 				possible_mobility_modes << "car";
 			}
-
-			if (has_bike) {
+			//The bike has to be with the person:
+			if (has_bike and vehicle_in_use = "bike") or (has_bike and current_place = living_place) {
 				possible_mobility_modes << "bike";
 			}
-
-			possible_mobility_modes << "bus";
+			//current_place <- nil;
 			do choose_mobility_mode;
 		}
 

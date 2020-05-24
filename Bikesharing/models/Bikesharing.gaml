@@ -222,7 +222,17 @@ global {
 		}
 
 	}
-		
+
+	//Choice of source for import of profile data:
+	action import_profile_file {
+		if profile_input_mode = "Feste Profil-Datei" {
+			profile_file <- file("./../includes/game_IT/" + case_study + "/Profiles.csv");
+		} else if profile_input_mode = "Google Umfrage" {
+			profile_file <- csv_file(url, ",");
+		}
+
+	}
+			
 	action profils_data_import {
 		matrix profile_matrix <- matrix(profile_file);
 		loop i from: 0 to: profile_matrix.rows - 1 {

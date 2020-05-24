@@ -478,6 +478,19 @@ species sharing_station {
 
 }
 
+species shared_bike {
+	//locaion of shared_bike is defined by the closest sharing_station:
+	sharing_station closest_sharing_station;
+	rgb color;
+	float size <- 5 #m;
+	bool in_use;
+
+	aspect default {
+		draw circle(size) color: color;
+	}
+
+}
+
 species people skills: [moving] {
 	string type;
 	rgb color;

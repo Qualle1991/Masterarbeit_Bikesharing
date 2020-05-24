@@ -23,6 +23,9 @@ global {
 	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 1 max: 10000 category: "Voreinstellung";
 	int nb_pendler <- 25 parameter: "Anzahl der Pendler: " min: 5 max: 1000category: "Voreinstellung";
 	int nb_shared_bikes <- 200 parameter: "Anzahl der Shared Bikes: " min: 0 max: 1000category: "Voreinstellung";
+	//Choice for sharing_station-creation-mode:
+	string creation_mode <- "Off" among: ["On", "Off"] parameter: "Klickaktion" category: "Interaktion";
+	
 	string GISFolder <- "./../includes/City/" + case_study;
 	file<geometry> buildings_shapefile <- file<geometry>(GISFolder + "/buildings.shp");
 	file<geometry> external_shapefile <- file<geometry>(GISFolder + "/externalCities.shp");

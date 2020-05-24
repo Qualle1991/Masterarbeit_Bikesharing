@@ -946,10 +946,6 @@ experiment "Starte Szenario" type: gui {
 				{world.shape.width * 0, world.shape.height * 0.99};
 			}
 
-			graphics "hinweis" {
-				draw string("Tippe einzelne Strassen an, um sie für Autos zu sperren!") color: #cornflowerblue font: font("FHP Sun Office", 25, #none) at: {0, world.shape.height * 0.93};
-			}
-
 			//   		 overlay position: { 5, 5 } size: { 240 # px, 680 # px } background: # black transparency: 1.0 border: # black
 			//   		 {
 			//   			 rgb text_color <- # white;

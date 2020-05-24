@@ -1020,9 +1020,8 @@ experiment "Starte Szenario" type: gui {
 
 		}
 
-		display chart_2 type: opengl background: #black refresh: every(#day) {
-			chart "Fahrten tageweise" type: series size: {0.5, 0.8} position: {world.shape.width * (0.5), -world.shape.height * 1.8} background: #transparent color: #white title_font:
-			"FHP Sun" legend_font_size: 30 title_font_size: 35 {
+		display chart_2 type: java2D background: #black refresh: every(#day) {
+			chart "Fahrten tageweise" type: series size: {0.5, 0.5} background: #transparent color: #white title_font: "Arial" {
 				loop i from: 0 to: length(transport_type_cumulative_usage_per_day.keys) - 1 {
 					data transport_type_cumulative_usage_per_day.keys[i] value: transport_type_cumulative_usage_per_day.values[i] color:
 					color_per_mobility[transport_type_cumulative_usage_per_day.keys[i]];

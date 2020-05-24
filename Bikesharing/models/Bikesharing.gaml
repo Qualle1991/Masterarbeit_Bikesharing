@@ -933,8 +933,6 @@ experiment "Starte Szenario" type: gui {
 			*/
 
 			//image background_img;
-			//species gridHeatmaps aspect: pollution;
-			//species pie;
 			species bus_stop;
 			species bus aspect: bu;
 			species building aspect: depth refresh: false;

@@ -942,7 +942,7 @@ experiment "Starte Szenario" type: gui {
 			species bus aspect: default;
 			species people aspect: default;
 			graphics "time" {
-				draw string("Uhrzeit: " + current_date.hour) + ":" + string(current_date.minute) color: #darkgrey font: font("FHP Sun Office", 30, #italic) at:
+				draw string("Uhrzeit: " + current_date.hour) + ":" + string(current_date.minute) color: #darkgrey font: font("Arial", 30, #italic) at:
 				{world.shape.width * 0, world.shape.height * 0.99};
 			}
 

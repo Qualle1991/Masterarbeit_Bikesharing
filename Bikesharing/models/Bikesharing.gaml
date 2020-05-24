@@ -78,6 +78,7 @@ global {
 	
 	init {
 		//gama.pref_display_flat_charts <- true;
+		
 		create road from: roads_shapefile //TODO with: [mobility_allowed::(string(read("mobility_a")) split_with "|")] 
 		{
 			mobility_allowed <- ["walking", "bike", "car", "bus", "shared_bike"];
@@ -111,11 +112,31 @@ global {
 		do characteristic_file_import;
 		do compute_graph;
 
+		// Bus EBW
 		create bus {
 			stops <- list(bus_stop);
 			location <- first(stops).location;
 			stop_passengers <- map<bus_stop, list<people>>(stops collect (each::[]));
 		}
+
+/*
+		// Four Busses for Luckenwalde to simulate an hourly cycle:
+		loop i from: 0 to: 3 {
+			create bus {
+				stops <- list(bus_stop);
+				location <- stops[i * 8].location;
+				loop y from: 0 to: i * 8 {
+					bus_stop firstStop <- first(stops);
+					remove firstStop from: stops;
+					add firstStop to: stops;
+				}
+
+				stop_passengers <- map<bus_stop, list<people>>(stops collect (each::[]));
+			}
+
+		}
+		* 
+		*/
 
 		create people number: nb_people {
 		//   		 type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];

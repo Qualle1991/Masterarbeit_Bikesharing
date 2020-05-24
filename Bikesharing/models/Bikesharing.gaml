@@ -358,10 +358,11 @@ global {
 
 	}
 
+	// Save cumulated numbers every evening for the daily charts: 
 	reflex save_cumulative_trips_per_day {
 		if (current_date.hour = 23 and current_date.minute = 0) {
 			transport_type_cumulative_usage_per_day <-
-			["walking"::transport_type_cumulative_usage.values[0], "bike"::transport_type_cumulative_usage.values[1], "car"::transport_type_cumulative_usage.values[2], "bus"::transport_type_cumulative_usage.values[3]];
+			["walking"::transport_type_cumulative_usage.values[0], "bike"::transport_type_cumulative_usage.values[1], "car"::transport_type_cumulative_usage.values[2], "bus"::transport_type_cumulative_usage.values[3], "shared_bike"::transport_type_cumulative_usage.values[4]];
 		}
 
 	}

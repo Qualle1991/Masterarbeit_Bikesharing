@@ -499,12 +499,18 @@ species people skills: [moving] {
 	list<trip_objective> objectives;
 	trip_objective my_current_objective;
 	building current_place;
-	string mobility_mode;
-	list<string> possible_mobility_modes;
+	bus_stop closest_bus_stop;
+	sharing_station closest_sharing_station;
 	bool has_car;
 	bool has_bike;
-	bus_stop closest_bus_stop;
+	bool has_bikesharing;
+	string vehicle_in_use;
+	list<string> possible_mobility_modes;
+	string mobility_mode;
 	int bus_status <- 0;
+	int shared_bike_status <- 0;
+	shared_bike current_shared_bike <- nil;
+	list latest_modes;
 
 	action create_trip_objectives {
 		map<string, int> activities <- activity_data[type];

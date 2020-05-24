@@ -752,6 +752,58 @@ species people skills: [moving] {
 
 	}
 
+	//Move according to the selected mobility mode shared_bike:	
+	reflex move_shared_bike when: (my_current_objective != nil) and (mobility_mode = "shared_bike") {
+	//Not yet started riding the shared_bike --> go to closest sharing_station:
+		if (shared_bike_status = 0) {
+		//do goto target:(road with_min_of (each distance_to (self)));
+			do goto target: closest_sharing_station.location on: graph_per_mobility["walking"];
+			//Person has found a bike and takes it to the sharing_station next to the target:
+			if (location = closest_sharing_station.location and length(self.closest_sharing_station.parked_bikes) > 0) {
+				shared_bike_status <- 1;
+				current_shared_bike <- closest_sharing_station.parked_bikes[0];
+				current_shared_bike.in_use <- true;
+				remove closest_sharing_station.parked_bikes[0] from: closest_sharing_station.parked_bikes;
+				//do goto target:(road with_min_of (each distance_to (self)));
+				do goto target: sharing_station with_min_of (each distance_to (my_current_objective)) on: graph_per_mobility["shared_bike"];
+				counter_rides <- counter_rides + 1;
+			}
+			// If a person arrives at the sharing_station and someone else took the last shared_bike before:
+			if (location = closest_sharing_station.location and length(self.closest_sharing_station.parked_bikes) = 0) {
+				write "Mhh, kein Fahrrad mehr da :(";
+				count_missed_bike <- count_missed_bike + 1;
+				do choose_mobility_mode;
+			}
+
+			//Person arrives at the sharing_station next to the final destination:
+			if (location = (sharing_station with_min_of (each distance_to (my_current_objective))).location) {
+				closest_sharing_station <- sharing_station with_min_of (each distance_to (my_current_objective));
+				add current_shared_bike to: closest_sharing_station.parked_bikes;
+				current_shared_bike.closest_sharing_station <- closest_sharing_station;
+				current_shared_bike.in_use <- false;
+
+				//do goto target:(road with_min_of (each distance_to (self)));
+				do goto target: my_current_objective.place.location on: graph_per_mobility["walking"];
+			}
+
+			//Person finally arrived:
+			if (location = my_current_objective.place.location) {
+				current_place <- my_current_objective.place;
+				location <- any_location_in(current_place);
+				my_current_objective <- nil;
+				closest_bus_stop <- bus_stop with_min_of (each distance_to (self));
+				closest_sharing_station <- sharing_station with_min_of (each distance_to (self));
+				add mobility_mode to: latest_modes;
+				mobility_mode <- nil;
+				shared_bike_status <- 0;
+				current_shared_bike <- nil;
+				counter_succeeded <- counter_succeeded + 1;
+			}
+
+		}
+
+	}
+	
 	aspect default {
 		if (mobility_mode = nil) {
 			draw circle(size) at: location + {0, 0, (current_place != nil ? current_place.height : 0.0) + 4} color: color;

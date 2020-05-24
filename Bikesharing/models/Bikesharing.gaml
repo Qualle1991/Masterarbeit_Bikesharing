@@ -893,27 +893,31 @@ experiment "Starte Szenario" type: gui {
 		display map type: opengl refresh: every(1 #cycle) draw_env: false background: #black //refresh: every(#hour)
 		{
 			event [mouse_down] action: create_sharing_station;
-			overlay position: {0.1, 0.1} size: {240 #px, 680 #px} background: #black transparency: 1.0 border: #black {
-				rgb text_color <- #white;
-				float y <- 60 #px;
-				draw "Gebäudetyp" at: {40 #px, y} color: text_color font: font("Helvetica", 48, #bold) perspective: false;
-				y <- y + 40 #px;
-				loop type over: color_per_category.keys {
-					draw square(12 #px) at: {20 #px, y} color: color_per_category[type] border: #white;
-					draw type at: {40 #px, y + 10 #px} color: color_per_category[type] font: font("Helvetica", 18 #px, #none) perspective: false;
-					y <- y + 35 #px;
+			/* 
+			overlay position: { 0.1, 0.1 } size: { 240 # px, 680 # px } background: # black transparency: 1.0 border: # black
+			{
+				rgb text_color <- # white;
+				float y <- 60 # px;
+				draw "Gebäudetyp" at: { 40 # px, y } color: text_color font: font("Helvetica", 48, # bold) perspective: false;
+				y <- y + 40 # px;
+				loop type over: color_per_category.keys
+				{
+					draw square(12 # px) at: { 20 # px, y } color: color_per_category[type] border: # white;
+					draw type at: { 40 # px, y + 10 # px } color: color_per_category[type] font: font("Helvetica", 18 # px, # none) perspective: false;
+					y <- y + 35 # px;
 				}
 
-				y <- y + 60 #px;
-				draw "Menschen" at: {40 #px, y} color: text_color font: font("Helvetica", 48, #bold) perspective: false;
-				y <- y + 40 #px;
-				loop type over: color_per_type.keys {
-					draw square(12 #px) at: {20 #px, y} color: color_per_type[type] border: #white;
-					draw type at: {40 #px, y + 10 #px} color: color_per_type[type] font: font("Helvetica", 18, #none) perspective: false;
-					y <- y + 35 #px;
+				y <- y + 60 # px;
+				draw "Menschen" at: { 40 # px, y } color: text_color font: font("Helvetica", 48, # bold) perspective: false;
+				y <- y + 40 # px;
+				loop type over: color_per_type.keys
+				{
+					draw square(12 # px) at: { 20 # px, y } color: color_per_type[type] border: # white;
+					draw type at: { 40 # px, y + 10 # px } color: color_per_type[type] font: font("Helvetica", 18, # none) perspective: false;
+					y <- y + 35 # px;
 				}
 
-				y <- y + 30 #px;
+				y <- y + 30 # px;
 
 				//   			 draw "Mobility Mode" at: { 40 # px, 600 # px } color: text_color font: font("Helvetica", 20, # bold) perspective: false;
 				//   			 map<string, rgb> list_of_existing_mobility <- map<string, rgb> (["Walking"::#gold, "Bike"::#orangered, "Car"::#maroon, "Bus"::#lightgrey]);
@@ -926,6 +930,7 @@ experiment "Starte Szenario" type: gui {
 				//   			 }
 
 			}
+			*/
 
 			image ebw_background;
 			//species gridHeatmaps aspect: pollution;

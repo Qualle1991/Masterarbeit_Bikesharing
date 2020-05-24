@@ -392,6 +392,7 @@ species bus skills: [moving] {
 	map<bus_stop, list<people>> stop_passengers;
 	bus_stop my_target;
 
+	// Everytime the bus stopped at a target, it will get a new target:
 	reflex new_target when: my_target = nil {
 		bus_stop firstStop <- first(stops);
 		remove firstStop from: stops;
@@ -399,17 +400,18 @@ species bus skills: [moving] {
 		my_target <- firstStop;
 	}
 
-	reflex r {
+	// Bus ride routine:
+	reflex ride {
 		do goto target: my_target.location on: graph_per_mobility["car"] speed: speed_per_mobility["bus"];
 		if (location = my_target.location) {
-		////////  	release some people
+		//release people according to stop_passengers list:
 			ask stop_passengers[my_target] {
 				location <- myself.my_target.location;
 				bus_status <- 2;
 			}
 
 			stop_passengers[my_target] <- [];
-			///////// 	get some people
+			//get waiting people:
 			loop p over: my_target.waiting_people {
 				bus_stop b <- bus_stop with_min_of (each distance_to (p.my_current_objective.place.location));
 				add p to: stop_passengers[b];
@@ -417,11 +419,11 @@ species bus skills: [moving] {
 
 			my_target.waiting_people <- [];
 			my_target <- nil;
-		}
+		} 
 
 	}
 
-	aspect bu {
+	aspect default {
 		draw rectangle(40 #m, 20 #m) color: empty(stop_passengers.values accumulate (each)) ? #yellow : #red border: #black;
 	}
 

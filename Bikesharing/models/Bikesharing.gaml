@@ -825,7 +825,9 @@ species people skills: [moving] {
 			draw sphere(size) at: {location.x, location.y, cycle * 2} color: color;
 		}
 
-	} }
+	}
+	
+}
 
 species road {
 	list<string> mobility_allowed;
@@ -847,39 +849,6 @@ species road {
 	aspect mobility {
 		string max_mobility <- mobility_allowed with_max_of (width_per_mobility[each]);
 		draw shape width: width_per_mobility[max_mobility] color: color_per_mobility[max_mobility];
-	}
-
-	user_command to_pedestrian_road {
-		mobility_allowed <- ["walking", "bike"];
-		my_color <- #cornflowerblue;
-		ask world {
-			do compute_graph;
-		}
-
-		timer <- 10.0;
-		gui_action <- 500;
-	}
-
-	action to_pedestrian_road_ext {
-		mobility_allowed <- ["walking", "bike"];
-		my_color <- #cornflowerblue;
-		ask world {
-			do compute_graph;
-		}
-
-		timer <- 10.0;
-		gui_action <- 1000;
-	}
-
-	action to_normal_road_ext {
-		mobility_allowed <- ["walking", "bike", "car"];
-		ask world {
-			do compute_graph;
-		}
-
-		my_color <- rgb(125, 125, 125);
-		timer <- 10.0;
-		gui_action <- 1000;
 	}
 
 	reflex update_gui_action_chart {

@@ -350,9 +350,10 @@ global {
 		rewrite: false to: "../results/mobility.csv" type: "csv";
 	}
 
+	// Cumulative trips are just stored for one day:
 	reflex reset_cumulative_trips {
 		if (current_date.hour = 6 and current_date.minute = 0) {
-			transport_type_cumulative_usage <- ["walking"::0, "bike"::0, "car"::0, "bus"::0];
+			transport_type_cumulative_usage <- ["walking"::0, "bike"::0, "car"::0, "bus"::0, "shared_bike"::0];
 		}
 
 	}

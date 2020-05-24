@@ -370,42 +370,6 @@ global {
 //global end:
 }
 
-species map_interaction_button {
-	string button_name;
-	bool active;
-	int type;
-
-	aspect default {
-		if (active = false) {
-			draw string(button_name) color: #grey font: font("FHP Sun Office", 30, #italic);
-		} else {
-			draw string(button_name) color: #white font: font("FHP Sun Office", 30, #italic #bold);
-		}
-
-	}
-
-	action all_roads_to_pedestrian {
-		write congestion_map;
-		ask road {
-			do to_pedestrian_road_ext;
-		}
-
-		write "user_command executed";
-		write congestion_map;
-	}
-
-	action all_roads_to_normal {
-		write congestion_map;
-		ask road {
-			do to_normal_road_ext;
-		}
-
-		write "user_command executed";
-		//write congestion_map;
-	}
-
-}
-
 species trip_objective {
 	building place;
 	int starting_hour;

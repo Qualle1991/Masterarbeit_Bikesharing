@@ -11,7 +11,9 @@ global {
 	//ENVIRONMENT
 	float step <- 10 #mn update: 10 #mn;
 	date starting_date <- date([2020, 4, 1, 0, 0]);
-	string case_study <- "EBW";
+	// case_study needs a folder named like the city in focus
+	string case_study <- "luckenwalde";
+	string EPSG <- "EPSG:25833";
 	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 100 max: 1000;
 	int nb_pendler <- 100 parameter: "Anzahl der Pendler: " min: 100 max: 1000;
 	string GISFolder <- "./../includes/City/" + case_study;

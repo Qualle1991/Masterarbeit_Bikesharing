@@ -77,7 +77,7 @@ global {
 	int count_missed_bike <- 0;
 	
 	init {
-		gama.pref_display_flat_charts <- true;
+		//gama.pref_display_flat_charts <- true;
 		do import_shapefiles;
 		do profils_data_import;
 		do activity_data_import;

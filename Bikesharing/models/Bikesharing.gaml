@@ -583,7 +583,11 @@ species people skills: [moving] {
 	}
 
 	action back_home {
-		self.location <- self.living_place;
+		self.location <- any_location_in(self.living_place);
+		current_place <- living_place;
+		vehicle_in_use <- nil;
+		my_current_objective <- nil;
+		mobility_mode <- nil;
 	}
 
 	reflex home {

@@ -38,7 +38,7 @@ global {
 	geometry shape <- envelope(roads_shapefile);
 
 	//ROAD SPEED LIMIT
-	float max_speed_general <- 50.0 parameter: "Höchstgeschwindigkeit" min: 10.0 max: 60.0;
+	float max_speed_general <- 50.0;
 
 	//User Interaction in Charts abbilden
 	int gui_action <- 0;

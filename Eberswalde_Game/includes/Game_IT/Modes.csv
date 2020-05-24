@@ -1,0 +1,11 @@
+;Fix price per trip;Price/km;waiting time per segment (minutes);Time/km;Social Pattern;Difficulty / per trip;color;width;speed
+walking;0;0.005;0.2;15;0.1;0;gold;2;3
+bike;0;0.02;1;8;0.5;0.1;orangered;3;25
+eScooter;0;0.15;1.5;2;0.75;0;orange;4;40
+PEV;0;0.1;3;6;1;0.3;red;5;20
+Shared Vehicles;0;0.7;5;2;0.5;0.4;red;5;60
+car;0;0.28;2.5;2;1;0.2;maroon;5;60
+Motorcycles/scooters;0;0.18;2;2;0.3;0.1;orange;5;20
+Track based vehicles;2.5;0;5;2;0.2;0;red;5;20
+bus;0;0;10;6;0.15;0.5;lightgrey;5;60
+Delivery;0;0.2;3;;1;1;red;5;20

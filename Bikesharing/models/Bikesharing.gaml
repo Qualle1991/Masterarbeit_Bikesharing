@@ -48,6 +48,7 @@ global {
 	file activity_file <- file(ProjectFolder + "profiles_and_modes/ActivityPerProfile.csv");
 	file criteria_file <- file(ProjectFolder + "profiles_and_modes/CriteriaFile.csv");
 	file mode_file <- file(ProjectFolder + "profiles_and_modes/Modes.csv");
+	file profile_file;
 
 	//MAPS
 	map<string, rgb>

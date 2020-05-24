@@ -984,17 +984,15 @@ experiment "Starte Szenario" type: gui {
 
 		}
 
-		display chart type: opengl background: #black draw_env: false refresh: every(#minute) {
-			image ebw_background_charts position: {0, 0} size: {1, 1};
-			chart "Fahrten tageweise" type: pie style: ring size: {0.5, 0.8} position: {world.shape.width * (0.001), -world.shape.height * 1.1} background: #transparent color: #black
-			title_font: "FHP Sun" tick_font_size: 0 {
+		display chart type: java2D background: #black draw_env: false refresh: every(#minute) {
+			chart "Fahrten tageweise" type: pie style: ring size: {0.5, 0.5} background: #transparent color: #black title_font: "Arial" {
 				loop i from: 0 to: length(transport_type_cumulative_usage.keys) - 1 {
 					data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color: color_per_mobility[transport_type_cumulative_usage.keys[i]];
 				}
 
 			}
 
-			//   		 chart "People Distribution" type: pie style: ring size: { 0.5, 0.8 } position: { 0, -world.shape.height * 1.1 } background: # transparent color: # black title_font: "FHP Sun"
+			//   		 chart "People Distribution" type: pie style: ring size: { 0.5, 0.8 } position: { 0, -world.shape.height * 1.1 } background: # transparent color: # black title_font: "Arial"
 			//   		 tick_font_size: 0
 			//   		 {
 			//   			 loop i from: 0 to: length(proportion_per_type.keys) - 1
@@ -1003,18 +1001,15 @@ experiment "Starte Szenario" type: gui {
 			//   			 }
 			//
 			//   		 }
-			chart "Fahrten stundenweise" type: xy size: {0.5, 0.8} position: {world.shape.width * (0.45), -world.shape.height * 1.0} background: #transparent color: #white title_font:
-			"FHP Sun" tick_font_size: 0 legend_font_size: 30 title_font_size: 35 {
+			chart "Fahrten stundenweise" type: series size: {0.5, 0.5} background: #transparent color: #white title_font: "Arial" {
 				loop i from: 0 to: length(transport_type_cumulative_usage.keys) - 1 {
 					data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color: color_per_mobility[transport_type_cumulative_usage.keys[i]];
-					data "" value: gui_action;
-					data "" value: max_speed_general;
 				}
 
 			}
 
 			graphics "Nb_Agents:" {
-				draw string(sum_of(transport_type_cumulative_usage.values, each)) color: #white font: font("Helvetica", 28, #bold) at: {world.shape.width * 0.11, 0.71 * world.shape.height};
+				draw string(sum_of(transport_type_cumulative_usage.values, each)) color: #white font: font("Helvetica", 28, #bold);
 				//   			 draw string("   ?") color: # white font: font("Helvetica", 28, # bold) at: { world.shape.width * 0.11, 0.76 * world.shape.height };
 				//   			 draw string("Mobilitäts-Modus: ") color: # white font: font("Helvetica", 28, # none) at: { world.shape.width * 0.62, 0.71 * world.shape.height };
 				//   			 draw string("Zu Fuß") color: # gold font: font("Helvetica", 24, # none) at: { world.shape.width * 0.765, 0.71 * world.shape.height };

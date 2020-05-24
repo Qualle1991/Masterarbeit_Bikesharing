@@ -305,25 +305,26 @@ global {
 
 	}
 
+	//Import charateristics:
 	action characteristic_file_import {
-			matrix mode_matrix <- matrix(mode_file_city_maut);
-			loop i from: 0 to: mode_matrix.rows - 1 {
-				string mobility_type <- mode_matrix[0, i];
-				if (mobility_type != "") {
-					list<float> vals <- [];
-					loop j from: 1 to: mode_matrix.columns - 1 {
-						vals << float(mode_matrix[j, i]);
-					}
-
-					charact_per_mobility[mobility_type] <- vals;
-					color_per_mobility[mobility_type] <- rgb(mode_matrix[7, i]);
-					width_per_mobility[mobility_type] <- float(mode_matrix[8, i]);
-					speed_per_mobility[mobility_type] <- float(mode_matrix[9, i]);
+		matrix mode_matrix <- matrix(mode_file);
+		loop i from: 0 to: mode_matrix.rows - 1 {
+			string mobility_type <- mode_matrix[0, i];
+			if (mobility_type != "") {
+				list<float> vals <- [];
+				loop j from: 1 to: mode_matrix.columns - 1 {
+					vals << float(mode_matrix[j, i]);
 				}
 
+				charact_per_mobility[mobility_type] <- vals;
+				color_per_mobility[mobility_type] <- rgb(mode_matrix[7, i]);
+				width_per_mobility[mobility_type] <- float(mode_matrix[8, i]);
+				speed_per_mobility[mobility_type] <- float(mode_matrix[9, i]);
 			}
 
 		}
+
+	}
 
 
 	action compute_graph {

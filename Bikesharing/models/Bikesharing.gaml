@@ -45,9 +45,9 @@ global {
 
 	// MOBILITY DATA
 	list<string> mobility_list <- ["walking", "bike", "car", "bus", "shared_bike"];
-	file activity_file <- file(ProjectFolder + "profiles_and_modes/ActivityPerProfile.csv");
-	file criteria_file <- file(ProjectFolder + "profiles_and_modes/CriteriaFile.csv");
-	file mode_file <- file(ProjectFolder + "profiles_and_modes/Modes.csv");
+	file activity_file <- file(ProjectFolder + "/profiles_and_modes/ActivityPerProfile.csv");
+	file criteria_file <- file(ProjectFolder + "/profiles_and_modes/CriteriaFile.csv");
+	file mode_file <- file(ProjectFolder + "/profiles_and_modes/Modes.csv");
 	file profile_file;
 
 	//MAPS
@@ -226,7 +226,7 @@ global {
 	//Choice of source for import of profile data:
 	action import_profile_file {
 		if profile_input_mode = "Feste Profil-Datei" {
-			profile_file <- file("./../includes/game_IT/" + case_study + "/Profiles.csv");
+			profile_file <- file(ProjectFolder + "/profiles_and_modes/Profiles.csv");
 		} else if profile_input_mode = "Google Umfrage" {
 			profile_file <- csv_file(url, ",");
 		}
@@ -1034,10 +1034,3 @@ experiment "Starte Szenario" type: gui {
 	}
 
 }
-
-   		 
-    
-
-
-
-

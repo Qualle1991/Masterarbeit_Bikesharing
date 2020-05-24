@@ -20,8 +20,9 @@ global {
 	//USER INTERACTION:	
 	//Choice for using Google forms instead of fixed profile_file:
 	string profile_input_mode <- "Feste Profil-Datei" among: ["Feste Profil-Datei", "Google Umfrage"] parameter: "Profil Import" category: "Voreinstellung";
-	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 100 max: 1000;
-	int nb_pendler <- 100 parameter: "Anzahl der Pendler: " min: 100 max: 1000;
+	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 1 max: 10000 category: "Voreinstellung";
+	int nb_pendler <- 25 parameter: "Anzahl der Pendler: " min: 5 max: 1000category: "Voreinstellung";
+	int nb_shared_bikes <- 200 parameter: "Anzahl der Shared Bikes: " min: 0 max: 1000category: "Voreinstellung";
 	string GISFolder <- "./../includes/City/" + case_study;
 	file<geometry> buildings_shapefile <- file<geometry>(GISFolder + "/buildings.shp");
 	file<geometry> external_shapefile <- file<geometry>(GISFolder + "/externalCities.shp");

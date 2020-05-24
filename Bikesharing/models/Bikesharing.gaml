@@ -434,6 +434,43 @@ species sharing_station {
 	list<shared_bike> parked_bikes;
 	//The height shows how many shared_bikes are parked at the sharing_station:
 	float height <- 50.0 update: 50.0 + 50.0 * length(parked_bikes);
+	//For bike collection and disposition:
+	list<shared_bike> collector;
+	list<sharing_station> ordered_stations;
+
+	// collect bikes that are too much:
+	action collect_bikes {
+		int count_bikes <- length(shared_bike);
+		int count_sharing_stations <- length(sharing_station);
+		if (length(parked_bikes) > (count_bikes / count_sharing_stations)) {
+			loop i from: 0 to: (length(parked_bikes) - count_bikes / count_sharing_stations) - 1 {
+				add last(parked_bikes) to: collector;
+				remove last(parked_bikes) from: parked_bikes;
+			}
+
+		}
+
+		ordered_stations <- sort_by(list(sharing_station), length(each.parked_bikes));
+	}
+	//Distribute bikes to the sharing_stations with lessest count of shared_bikes:
+	action distribute_bikes {
+		if (length(collector) > 0) {
+			loop i from: 0 to: length(collector) - 1 {
+				add last(collector) to: first(ordered_stations).parked_bikes;
+				last(first(ordered_stations).parked_bikes).closest_sharing_station <- first(ordered_stations);
+				remove last(collector) from: collector;
+				ordered_stations <- sort_by(list(sharing_station), length(each.parked_bikes));
+			}
+
+		}
+
+	}
+
+	// Distribute bicycles evenly among stations at fixed times:
+	reflex disposition when: current_date.hour = 0 {
+		do collect_bikes;
+		do distribute_bikes;
+	}
 
 	aspect default {
 		draw hexagon(10, 10) color: empty(parked_bikes) ? #white : #red border: #red depth: height;

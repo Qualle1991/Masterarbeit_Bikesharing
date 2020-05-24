@@ -278,8 +278,20 @@ global {
 			congestion_map[self] <- 10.0; //shape.perimeter;
 		}
 
-		create building from: buildings_shapefile with: [usage::string(read("Usage")), scale::string(read("Scale")), category::string(read("Category")), height::int(12 + rnd(8))] {
+		// Buildings including heigt from building level if in data, else random building level between 1 and 5:
+		create building from: buildings_shapefile with: [usage::string(read("usage")), scale::string(read("scale")), category::string(read("category")), level::int(read("building_l"))] {
 			color <- color_per_category[category];
+			if (level > 0) {
+				height <- 2.6 * level;
+			} else {
+				if (category in ["Park", "Cultural"]) {
+					height <- 0.0;
+				} else {
+					height <- 2.6 * rnd(1, 5);
+				}
+
+			}
+
 		}
 
 		create externalCities from: external_shapefile with: [train::bool(get("train"))];

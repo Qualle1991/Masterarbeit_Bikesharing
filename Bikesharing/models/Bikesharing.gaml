@@ -429,19 +429,6 @@ species bus skills: [moving] {
 
 }
 
-grid gridHeatmaps height: 50 width: 50 {
-	int pollution_level <- 0;
-	rgb pollution_color <- rgb(0 + pollution_level * 10, 0, 0) update: rgb(0 + pollution_level * 10, 0, 0);
-
-	aspect pollution {
-		draw shape color: pollution_color;
-	}
-
-	reflex raz when: every(1 #hour) {
-		pollution_level <- 0;
-	}
-
-}
 
 species people skills: [moving] {
 	string type;

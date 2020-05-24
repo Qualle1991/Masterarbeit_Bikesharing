@@ -933,13 +933,14 @@ experiment "Starte Szenario" type: gui {
 			*/
 
 			//image background_img;
-			species bus_stop;
-			species bus aspect: bu;
-			species building aspect: depth refresh: false;
+			species building aspect: default; // refresh: false;
 			species road;
-			species people aspect: base;
 			species externalCities;
-			species map_interaction_button;
+			species bus_stop;
+			species sharing_station;
+			species shared_bike;
+			species bus aspect: default;
+			species people aspect: default;
 			graphics "time" {
 				draw string("Uhrzeit: " + current_date.hour) + ":" + string(current_date.minute) color: #darkgrey font: font("FHP Sun Office", 30, #italic) at:
 				{world.shape.width * 0, world.shape.height * 0.99};

@@ -889,7 +889,8 @@ species externalCities parent: building {
 
 experiment "Starte Szenario" type: gui {
 	output {
-		display map type: opengl refresh: every(1 #cycle) draw_env: false background: #black #zoom //refresh: every(#hour)
+	//monitor test value: current_date.hour refresh: every(1#minute);
+		display map type: opengl refresh: every(1 #cycle) draw_env: false background: #black //refresh: every(#hour)
 		{
 			event [mouse_down] action: click_to_pedestrian_road;
 			event [mouse_down] action: choose_map_interaction;

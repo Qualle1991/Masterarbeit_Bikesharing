@@ -71,6 +71,11 @@ global {
 	map<string, int> transport_type_cumulative_usage_per_day <- map(mobility_list collect (each::0));
 	map<string, int> buildings_distribution <- map(color_per_category.keys collect (each::0));
 
+	//TESTING-COUNTERS
+	int counter_rides <- 0;
+	int counter_succeeded <- 0;
+	int count_missed_bike <- 0;
+	
 	init {
 		gama.pref_display_flat_charts <- true;
 		do import_shapefiles;

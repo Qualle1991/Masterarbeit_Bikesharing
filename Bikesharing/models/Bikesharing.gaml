@@ -168,14 +168,24 @@ global {
 
 		//nb_pendler
 		ask externalCities {
-			create people number: int(nb_pendler / 5) {
+			create people number: nb_pendler {
+				//TODO (Ein)pendler sollten nur Arbeitnehmer sein
 				type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
-				if myself.train = false {
-					has_car <- true;
+				if myself.train = true {
 					has_bike <- flip(proba_bike_per_type[type]);
-				} else {
+					has_bikesharing <- flip(proba_bikesharing_per_type[type]);
 					has_car <- false;
-					has_bike <- flip(proba_bike_per_type[type]);
+					if (has_bike = true) {
+						vehicle_in_use <- "bike";
+					} else {
+						vehicle_in_use <- nil;
+					}
+
+				} else {
+					has_car <- true;
+					has_bike <- false;
+					has_bikesharing <- false;
+					vehicle_in_use <- "car";
 				}
 
 				living_place <- myself;
@@ -183,6 +193,7 @@ global {
 				location <- any_location_in(living_place);
 				color <- color_per_type[type];
 				closest_bus_stop <- bus_stop with_min_of (each distance_to (self));
+				closest_sharing_station <- sharing_station with_min_of (each distance_to (self));
 				do create_trip_objectives;
 			}
 

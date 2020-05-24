@@ -6,13 +6,8 @@
 */
 model Bikesharing
 
-
 global
 {
-
-//PARAMETERS
-	bool updatePollution <- false parameter: "Pollution:" category: "Simulation";
-	//bool updateDensity <-false parameter: "Density:" category: "Simulation";
 
 	//ENVIRONMENT
 	float step <- 10 # mn update: 10 # mn;

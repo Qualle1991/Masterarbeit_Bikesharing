@@ -4,7 +4,7 @@
 * Description: Game on Luckenwalde with bikesharing, based on Game It by Tallaindier et al. and Eberswalde by //TODO
 * Tags: bikesharing, newmobility
 */
-model Eberswalde_Spiel
+model Bikesharing
 
 
 global

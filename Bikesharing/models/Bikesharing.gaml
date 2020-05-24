@@ -327,6 +327,7 @@ global {
 	}
 
 
+	//Create graph per mobility:
 	action compute_graph {
 		loop mobility_mode over: color_per_mobility.keys {
 			graph_per_mobility[mobility_mode] <- as_edge_graph(road where (mobility_mode in each.mobility_allowed)) use_cache false;

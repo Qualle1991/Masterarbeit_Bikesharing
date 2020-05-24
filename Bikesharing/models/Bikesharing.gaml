@@ -210,7 +210,19 @@ global {
 		}
 
 	}
-	
+
+	// Clicking action: Place the new sharing_station on the street next to users' location
+	action create_sharing_station {
+		if creation_mode = "On" {
+			create sharing_station number: 1 {
+				location <- location of (road closest_to (#user_location));
+				parked_bikes <- nil;
+			}
+
+		}
+
+	}
+		
 	action profils_data_import {
 		matrix profile_matrix <- matrix(profile_file);
 		loop i from: 0 to: profile_matrix.rows - 1 {

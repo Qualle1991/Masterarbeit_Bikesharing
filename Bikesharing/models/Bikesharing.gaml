@@ -932,7 +932,7 @@ experiment "Starte Szenario" type: gui {
 			}
 			*/
 
-			image ebw_background;
+			//image background_img;
 			//species gridHeatmaps aspect: pollution;
 			//species pie;
 			species bus_stop;

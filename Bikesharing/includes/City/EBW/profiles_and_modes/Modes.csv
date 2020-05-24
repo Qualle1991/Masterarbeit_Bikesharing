@@ -1,0 +1,6 @@
+;Fix price per trip;Price/km;waiting time per segment (minutes);Time/km;Social Pattern;Difficulty / per trip;color;width;speed
+walking;0;0.005;0.2;15;0.1;0;gold;2;3
+bike;0;0.02;1;8;0.5;0.1;orangered;3;25
+car;0;0.28;02. Mai;2;1;0.2;maroon;5;60
+bus;0;0;10;6;0.15;0.5;lightgrey;5;60
+shared_bike;0;0.1;5;8;0.5;0.1;red;3;25

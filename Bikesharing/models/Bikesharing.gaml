@@ -201,6 +201,16 @@ global {
 	//init end:
 	}
 
+	reflex update_buildings_distribution
+	{
+		buildings_distribution <- map(color_per_category.keys collect (each::0));
+		ask building
+		{
+			buildings_distribution[usage] <- buildings_distribution[usage] + 1;
+		}
+
+	}
+	
 	action profils_data_import {
 		matrix profile_matrix <- matrix(profile_file);
 		loop i from: 0 to: profile_matrix.rows - 1 {
@@ -333,13 +343,7 @@ global {
 	//   	 }
 	//
 	//    }
-	reflex update_buildings_distribution {
-		buildings_distribution <- map(color_per_category.keys collect (each::0));
-		ask building {
-			buildings_distribution[usage] <- buildings_distribution[usage] + 1;
-		}
 
-	}
 
 	reflex save_bug_attribute when: (false) {
 		write "transport_type_cumulative_usage" + transport_type_cumulative_usage;

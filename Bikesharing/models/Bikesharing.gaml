@@ -6,20 +6,19 @@
 */
 model Bikesharing
 
-global
-{
+global {
 
-	//ENVIRONMENT
-	float step <- 10 # mn update: 10 # mn;
+//ENVIRONMENT
+	float step <- 10 #mn update: 10 #mn;
 	date starting_date <- date([2018, 10, 1, 0, 0]);
 	string case_study <- "EBW";
 	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 100 max: 1000;
 	int nb_pendler <- 100 parameter: "Anzahl der Pendler: " min: 100 max: 1000;
 	string GISFolder <- "./../includes/City/" + case_study;
-	file<geometry> buildings_shapefile <- file<geometry> (GISFolder + "/buildings.shp");
-	file<geometry> external_shapefile <- file<geometry> (GISFolder + "/externalCities.shp");
-	file<geometry> roads_shapefile <- file<geometry> (GISFolder + "/roads.shp");
-	file<geometry> bus_shapefile <- file<geometry> (GISFolder + "/bus_stops_new.shp");
+	file<geometry> buildings_shapefile <- file<geometry>(GISFolder + "/buildings.shp");
+	file<geometry> external_shapefile <- file<geometry>(GISFolder + "/externalCities.shp");
+	file<geometry> roads_shapefile <- file<geometry>(GISFolder + "/roads.shp");
+	file<geometry> bus_shapefile <- file<geometry>(GISFolder + "/bus_stops_new.shp");
 	file ebw_background <- file(GISFolder + "/background.jpg");
 	file ebw_background_charts <- file(GISFolder + "/charts.jpg");
 	geometry shape <- envelope(roads_shapefile);
@@ -41,10 +40,10 @@ global
 	file mode_file_city_maut <- file("./../includes/game_IT/Modes_City_Maut.csv");
 
 	//MAPS
-	map<string, rgb> color_per_category <- ["Restaurant"::# dimgray, "Night"::# dimgray, "GP"::# dimgray, "Cultural"::# dimgray, "Shopping"::# dimgray, "HS"::# darkorange, "Uni"::#
-	gamared, "O"::# gray, "R"::# dimgray, "Park"::# transparent];
-	map<string, rgb> color_per_type <- ["Studierende"::# purple, "Schueler"::# gamablue, "Arbeitnehmer"::# cornflowerblue, "Fuehrungskraefte"::# lightgrey, "Heimzentrierte"::#
-	yellow, "Rentner"::# mediumturquoise];
+	map<string, rgb>
+	color_per_category <- ["Restaurant"::#dimgray, "Night"::#dimgray, "GP"::#dimgray, "Cultural"::#dimgray, "Shopping"::#dimgray, "HS"::#darkorange, "Uni"::#gamared, "O"::#gray, "R"::#dimgray, "Park"::#transparent];
+	map<string, rgb>
+	color_per_type <- ["Studierende"::#purple, "Schueler"::#gamablue, "Arbeitnehmer"::#cornflowerblue, "Fuehrungskraefte"::#lightgrey, "Heimzentrierte"::#yellow, "Rentner"::#mediumturquoise];
 	map<string, map<string, int>> activity_data;
 	map<string, float> proportion_per_type;
 	map<string, float> proba_bike_per_type;
@@ -61,8 +60,8 @@ global
 	map<string, int> transport_type_cumulative_usage <- map(mobility_list collect (each::0));
 	map<string, int> transport_type_cumulative_usage_per_day <- map(mobility_list collect (each::0));
 	map<string, int> buildings_distribution <- map(color_per_category.keys collect (each::0));
-	init
-	{
+
+	init {
 		gama.pref_display_flat_charts <- true;
 		do import_shapefiles;
 		do profils_data_import;
@@ -71,15 +70,13 @@ global
 		do characteristic_file_import;
 		do compute_graph;
 		create bus_stop from: bus_shapefile;
-		create bus
-		{
+		create bus {
 			stops <- list(bus_stop);
 			location <- first(stops).location;
-			stop_passengers <- map<bus_stop, list<people>> (stops collect (each::[]));
+			stop_passengers <- map<bus_stop, list<people>>(stops collect (each::[]));
 		}
 
-		create people number: nb_people
-		{
+		create people number: nb_people {
 		//   		 type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
 		//   		 has_car <- flip(proba_car_per_type[type]);
 		//   		 has_bike <- flip(proba_bike_per_type[type]);
@@ -101,17 +98,13 @@ global
 		}
 
 		//nb_pendler
-		ask externalCities
-		{
-			create people number: int(nb_pendler / 5)
-			{
+		ask externalCities {
+			create people number: int(nb_pendler / 5) {
 				type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
-				if myself.train = false
-				{
+				if myself.train = false {
 					has_car <- true;
 					has_bike <- flip(proba_bike_per_type[type]);
-				} else
-				{
+				} else {
 					has_car <- false;
 					has_bike <- flip(proba_bike_per_type[type]);
 				}
@@ -126,27 +119,20 @@ global
 
 		}
 
-		create map_interaction_button number: 1 with: [button_name::"Alle Strassen für Autos sperren", type:: 1, location::{ 0, world.shape.height * 0.8 }];
+		create map_interaction_button number: 1 with: [button_name::"Alle Strassen für Autos sperren", type:: 1, location::{0, world.shape.height * 0.8}];
 		//create map_interaction_button number: 1 with: [button_name::"Alle Strassen für Autos freigeben", type:: 2, location::{ 0, world.shape.height * 0.8 }];
 	}
 
-	
-
-	action choose_map_interaction
-	{
-		ask map_interaction_button overlapping (rectangle(1100, 100) at_location # user_location)
-		{
-			ask map_interaction_button
-			{
+	action choose_map_interaction {
+		ask map_interaction_button overlapping (rectangle(1100, 100) at_location #user_location) {
+			ask map_interaction_button {
 				active <- false;
 			}
 
 			active <- true;
-			if (self.type = 1)
-			{
+			if (self.type = 1) {
 				do all_roads_to_pedestrian;
-			} else
-			{
+			} else {
 				do all_roads_to_normal;
 			}
 
@@ -154,14 +140,11 @@ global
 
 	}
 
-	action profils_data_import
-	{
+	action profils_data_import {
 		matrix profile_matrix <- matrix(profile_file);
-		loop i from: 0 to: profile_matrix.rows - 1
-		{
+		loop i from: 0 to: profile_matrix.rows - 1 {
 			string profil_type <- profile_matrix[0, i];
-			if (profil_type != "")
-			{
+			if (profil_type != "") {
 				proba_car_per_type[profil_type] <- float(profile_matrix[2, i]);
 				proba_bike_per_type[profil_type] <- float(profile_matrix[3, i]);
 				proportion_per_type[profil_type] <- float(profile_matrix[4, i]);
@@ -171,19 +154,15 @@ global
 
 	}
 
-	action activity_data_import
-	{
+	action activity_data_import {
 		matrix activity_matrix <- matrix(activity_file);
-		loop i from: 1 to: activity_matrix.rows - 1
-		{
+		loop i from: 1 to: activity_matrix.rows - 1 {
 			string people_type <- activity_matrix[0, i];
 			map<string, int> activities;
 			string current_activity <- "";
-			loop j from: 1 to: activity_matrix.columns - 1
-			{
+			loop j from: 1 to: activity_matrix.columns - 1 {
 				string act <- activity_matrix[j, i];
-				if (act != current_activity)
-				{
+				if (act != current_activity) {
 					activities[act] <- j;
 					current_activity <- act;
 				}
@@ -195,42 +174,34 @@ global
 
 	}
 
-	action click_to_pedestrian_road
-	{
-		ask road closest_to # user_location
-		{
+	action click_to_pedestrian_road {
+		ask road closest_to #user_location {
 			do to_pedestrian_road_ext;
 		}
 
 	}
 
-	action criteria_file_import
-	{
+	action criteria_file_import {
 		matrix criteria_matrix <- matrix(criteria_file);
 		int nbCriteria <- criteria_matrix[1, 0] as int;
 		int nbTO <- criteria_matrix[1, 1] as int;
 		int lignCategory <- 2;
 		int lignCriteria <- 3;
-		loop i from: 5 to: criteria_matrix.rows - 1
-		{
+		loop i from: 5 to: criteria_matrix.rows - 1 {
 			string people_type <- criteria_matrix[0, i];
 			int index <- 1;
 			map<string, list<float>> m_temp <- map([]);
-			if (people_type != "")
-			{
+			if (people_type != "") {
 				list<float> l <- [];
-				loop times: nbTO
-				{
+				loop times: nbTO {
 					list<float> l2 <- [];
-					loop times: nbCriteria
-					{
+					loop times: nbCriteria {
 						add float(criteria_matrix[index, i]) to: l2;
 						index <- index + 1;
 					}
 
 					string cat_name <- criteria_matrix[index - nbTO, lignCategory];
-					loop cat over: cat_name split_with "|"
-					{
+					loop cat over: cat_name split_with "|" {
 						add l2 at: cat to: m_temp;
 					}
 
@@ -243,19 +214,14 @@ global
 
 	}
 
-	action characteristic_file_import
-	{
-		if (szenario = "City-Maut")
-		{
+	action characteristic_file_import {
+		if (szenario = "City-Maut") {
 			matrix mode_matrix <- matrix(mode_file);
-			loop i from: 0 to: mode_matrix.rows - 1
-			{
+			loop i from: 0 to: mode_matrix.rows - 1 {
 				string mobility_type <- mode_matrix[0, i];
-				if (mobility_type != "")
-				{
+				if (mobility_type != "") {
 					list<float> vals <- [];
-					loop j from: 1 to: mode_matrix.columns - 1
-					{
+					loop j from: 1 to: mode_matrix.columns - 1 {
 						vals << float(mode_matrix[j, i]);
 					}
 
@@ -267,17 +233,13 @@ global
 
 			}
 
-		} else
-		{
+		} else {
 			matrix mode_matrix <- matrix(mode_file_city_maut);
-			loop i from: 0 to: mode_matrix.rows - 1
-			{
+			loop i from: 0 to: mode_matrix.rows - 1 {
 				string mobility_type <- mode_matrix[0, i];
-				if (mobility_type != "")
-				{
+				if (mobility_type != "") {
 					list<float> vals <- [];
-					loop j from: 1 to: mode_matrix.columns - 1
-					{
+					loop j from: 1 to: mode_matrix.columns - 1 {
 						vals << float(mode_matrix[j, i]);
 					}
 
@@ -293,27 +255,22 @@ global
 
 	}
 
-	action import_shapefiles
-	{
-		create road from: roads_shapefile
-		{
+	action import_shapefiles {
+		create road from: roads_shapefile {
 			mobility_allowed <- ["walking", "bike", "car", "bus"];
 			capacity <- shape.perimeter / 10.0;
 			congestion_map[self] <- 10.0; //shape.perimeter;
 		}
 
-		create building from: buildings_shapefile with: [usage::string(read("Usage")), scale::string(read("Scale")), category::string(read("Category")), height::int(12 + rnd(8))]
-		{
+		create building from: buildings_shapefile with: [usage::string(read("Usage")), scale::string(read("Scale")), category::string(read("Category")), height::int(12 + rnd(8))] {
 			color <- color_per_category[category];
 		}
 
 		create externalCities from: external_shapefile with: [train::bool(get("train"))];
 	}
 
-	action compute_graph
-	{
-		loop mobility_mode over: color_per_mobility.keys
-		{
+	action compute_graph {
+		loop mobility_mode over: color_per_mobility.keys {
 			graph_per_mobility[mobility_mode] <- as_edge_graph(road where (mobility_mode in each.mobility_allowed)) use_cache false;
 		}
 
@@ -328,36 +285,29 @@ global
 	//   	 }
 	//
 	//    }
-	reflex update_buildings_distribution
-	{
+	reflex update_buildings_distribution {
 		buildings_distribution <- map(color_per_category.keys collect (each::0));
-		ask building
-		{
+		ask building {
 			buildings_distribution[usage] <- buildings_distribution[usage] + 1;
 		}
 
 	}
 
-	reflex save_bug_attribute when: (false)
-	{
+	reflex save_bug_attribute when: (false) {
 		write "transport_type_cumulative_usage" + transport_type_cumulative_usage;
 		save [transport_type_cumulative_usage.values[0], transport_type_cumulative_usage.values[1], transport_type_cumulative_usage.values[2], transport_type_cumulative_usage.values[3]]
 		rewrite: false to: "../results/mobility.csv" type: "csv";
 	}
 
-	reflex reset_cumulative_trips
-	{
-		if (current_date.hour = 6 and current_date.minute = 0)
-		{
+	reflex reset_cumulative_trips {
+		if (current_date.hour = 6 and current_date.minute = 0) {
 			transport_type_cumulative_usage <- ["walking"::0, "bike"::0, "car"::0, "bus"::0];
 		}
 
 	}
 
-	reflex save_cumulative_trips_per_day
-	{
-		if (current_date.hour = 23 and current_date.minute = 0)
-		{
+	reflex save_cumulative_trips_per_day {
+		if (current_date.hour = 23 and current_date.minute = 0) {
 			transport_type_cumulative_usage_per_day <-
 			["walking"::transport_type_cumulative_usage.values[0], "bike"::transport_type_cumulative_usage.values[1], "car"::transport_type_cumulative_usage.values[2], "bus"::transport_type_cumulative_usage.values[3]];
 		}
@@ -371,28 +321,23 @@ global
 
 }
 
-species map_interaction_button
-{
+species map_interaction_button {
 	string button_name;
 	bool active;
 	int type;
-	aspect default
-	{
-		if (active = false)
-		{
-			draw string(button_name) color: # grey font: font("FHP Sun Office", 30, # italic);
-		} else
-		{
-			draw string(button_name) color: # white font: font("FHP Sun Office", 30, # italic # bold);
+
+	aspect default {
+		if (active = false) {
+			draw string(button_name) color: #grey font: font("FHP Sun Office", 30, #italic);
+		} else {
+			draw string(button_name) color: #white font: font("FHP Sun Office", 30, #italic #bold);
 		}
 
 	}
 
-	action all_roads_to_pedestrian
-	{
+	action all_roads_to_pedestrian {
 		write congestion_map;
-		ask road
-		{
+		ask road {
 			do to_pedestrian_road_ext;
 		}
 
@@ -400,11 +345,9 @@ species map_interaction_button
 		write congestion_map;
 	}
 
-	action all_roads_to_normal
-	{
+	action all_roads_to_normal {
 		write congestion_map;
-		ask road
-		{
+		ask road {
 			do to_normal_road_ext;
 		}
 
@@ -414,52 +357,45 @@ species map_interaction_button
 
 }
 
-species trip_objective
-{
+species trip_objective {
 	building place;
 	int starting_hour;
 	int starting_minute;
 }
 
-species bus_stop
-{
+species bus_stop {
 	list<people> waiting_people;
-	aspect default
-	{
-		draw triangle(10) color: empty(waiting_people) ? # black : # blue border: # black depth: 1;
+
+	aspect default {
+		draw triangle(10) color: empty(waiting_people) ? #black : #blue border: #black depth: 1;
 	}
 
 }
 
-species bus skills: [moving]
-{
+species bus skills: [moving] {
 	list<bus_stop> stops;
 	map<bus_stop, list<people>> stop_passengers;
 	bus_stop my_target;
-	reflex new_target when: my_target = nil
-	{
+
+	reflex new_target when: my_target = nil {
 		bus_stop firstStop <- first(stops);
 		remove firstStop from: stops;
 		add firstStop to: stops;
 		my_target <- firstStop;
 	}
 
-	reflex r
-	{
+	reflex r {
 		do goto target: my_target.location on: graph_per_mobility["car"] speed: speed_per_mobility["bus"];
-		if (location = my_target.location)
-		{
+		if (location = my_target.location) {
 		////////  	release some people
-			ask stop_passengers[my_target]
-			{
+			ask stop_passengers[my_target] {
 				location <- myself.my_target.location;
 				bus_status <- 2;
 			}
 
 			stop_passengers[my_target] <- [];
 			///////// 	get some people
-			loop p over: my_target.waiting_people
-			{
+			loop p over: my_target.waiting_people {
 				bus_stop b <- bus_stop with_min_of (each distance_to (p.my_current_objective.place.location));
 				add p to: stop_passengers[b];
 			}
@@ -470,34 +406,30 @@ species bus skills: [moving]
 
 	}
 
-	aspect bu
-	{
-		draw rectangle(40#m, 20#m) color: empty(stop_passengers.values accumulate (each)) ? #yellow:#red border: #black;
+	aspect bu {
+		draw rectangle(40 #m, 20 #m) color: empty(stop_passengers.values accumulate (each)) ? #yellow : #red border: #black;
 	}
 
 }
 
-grid gridHeatmaps height: 50 width: 50
-{
+grid gridHeatmaps height: 50 width: 50 {
 	int pollution_level <- 0;
 	rgb pollution_color <- rgb(0 + pollution_level * 10, 0, 0) update: rgb(0 + pollution_level * 10, 0, 0);
-	aspect pollution
-	{
+
+	aspect pollution {
 		draw shape color: pollution_color;
 	}
 
-	reflex raz when: every(1 # hour)
-	{
+	reflex raz when: every(1 #hour) {
 		pollution_level <- 0;
 	}
 
 }
 
-species people skills: [moving]
-{
+species people skills: [moving] {
 	string type;
 	rgb color;
-	float size <- 5 # m;
+	float size <- 5 #m;
 	building living_place;
 	list<trip_objective> objectives;
 	trip_objective my_current_objective;
@@ -508,32 +440,26 @@ species people skills: [moving]
 	bool has_bike;
 	bus_stop closest_bus_stop;
 	int bus_status <- 0;
-	action create_trip_objectives
-	{
+
+	action create_trip_objectives {
 		map<string, int> activities <- activity_data[type];
 		//if (activities = nil ) or (empty(activities)) {write "my type: " + type;}
-		loop act over: activities.keys
-		{
-			if (act != "")
-			{
+		loop act over: activities.keys {
+			if (act != "") {
 				list<string> parse_act <- act split_with "|";
 				string act_real <- one_of(parse_act);
 				list<building> possible_bds;
-				if (length(act_real) = 2) and (first(act_real) = "R")
-				{
+				if (length(act_real) = 2) and (first(act_real) = "R") {
 					possible_bds <- self.living_place;
 					//possible_bds <- building where ((each.usage = "R") and (each.scale = last(act_real)));
-				} else if (length(act_real) = 2) and (first(act_real) = "O")
-				{
+				} else if (length(act_real) = 2) and (first(act_real) = "O") {
 					possible_bds <- building where ((each.usage = "O") and (each.scale = last(act_real)));
-				} else
-				{
+				} else {
 					possible_bds <- building where (each.category = act_real);
 				}
 
 				building act_build <- one_of(possible_bds);
-				if (act_build = nil)
-				{
+				if (act_build = nil) {
 					write "problem with act_real: " + act_real;
 				}
 
@@ -544,10 +470,8 @@ species people skills: [moving]
 
 	}
 
-	action create_activity (string act_name, building act_place, int act_time)
-	{
-		create trip_objective
-		{
+	action create_activity (string act_name, building act_place, int act_time) {
+		create trip_objective {
 			name <- act_name;
 			place <- act_place;
 			starting_hour <- act_time;
@@ -557,16 +481,13 @@ species people skills: [moving]
 
 	}
 
-	action choose_mobility_mode
-	{
+	action choose_mobility_mode {
 		list<list> cands <- mobility_mode_eval();
 		map<string, list<float>> crits <- weights_map[type];
 		list<float> vals;
-		loop obj over: crits.keys
-		{
+		loop obj over: crits.keys {
 			if (obj = my_current_objective.name) or ((my_current_objective.name in ["RS", "RM", "RL"]) and (obj = "R")) or ((my_current_objective.name in ["OS", "OM", "OL"]) and
-			(obj = "O"))
-			{
+			(obj = "O")) {
 				vals <- crits[obj];
 				break;
 			}
@@ -574,17 +495,14 @@ species people skills: [moving]
 		}
 
 		list<map> criteria_WM;
-		loop i from: 0 to: length(vals) - 1
-		{
+		loop i from: 0 to: length(vals) - 1 {
 			criteria_WM << ["name"::"crit" + i, "weight"::vals[i]];
 		}
 
 		int choice <- weighted_means_DM(cands, criteria_WM);
-		if (choice >= 0)
-		{
+		if (choice >= 0) {
 			mobility_mode <- possible_mobility_modes[choice];
-		} else
-		{
+		} else {
 			mobility_mode <- one_of(possible_mobility_modes);
 		}
 
@@ -593,15 +511,12 @@ species people skills: [moving]
 		//    write criteria_WM;
 	}
 
-	action back_home
-	{
+	action back_home {
 		self.location <- self.living_place;
 	}
 
-	reflex home
-	{
-		if current_date.hour = rnd(0, 3) and self.location != self.living_place
-		{
+	reflex home {
+		if current_date.hour = rnd(0, 3) and self.location != self.living_place {
 			do back_home;
 			my_current_objective <- nil;
 		}
@@ -615,21 +530,18 @@ species people skills: [moving]
 	//   	 
 	//    }
 	//}
-	list<list> mobility_mode_eval
-	{
+	list<list> mobility_mode_eval {
 		list<list> candidates;
-		loop mode over: possible_mobility_modes
-		{
+		loop mode over: possible_mobility_modes {
 			list<float> characteristic <- charact_per_mobility[mode];
 			list<float> cand;
 			float distance <- 0.0;
-			using topology(graph_per_mobility[mode])
-			{
+			using topology(graph_per_mobility[mode]) {
 				distance <- distance_to(location, my_current_objective.place.location);
 			}
 
 			cand << characteristic[0] + characteristic[1] * distance;
-			cand << characteristic[2] # mn + distance / speed_per_mobility[mode];
+			cand << characteristic[2] #mn + distance / speed_per_mobility[mode];
 			cand << characteristic[4];
 			cand << characteristic[5];
 			add cand to: candidates;
@@ -637,17 +549,13 @@ species people skills: [moving]
 
 		//normalisation
 		list<float> max_values;
-		loop i from: 0 to: length(candidates[0]) - 1
-		{
+		loop i from: 0 to: length(candidates[0]) - 1 {
 			max_values << max(candidates collect abs(float(each[i])));
 		}
 
-		loop cand over: candidates
-		{
-			loop i from: 0 to: length(cand) - 1
-			{
-				if (max_values[i] != 0.0)
-				{
+		loop cand over: candidates {
+			loop i from: 0 to: length(cand) - 1 {
+				if (max_values[i] != 0.0) {
 					cand[i] <- float(cand[i]) / max_values[i];
 				}
 
@@ -658,36 +566,29 @@ species people skills: [moving]
 		return candidates;
 	}
 
-	action updatePollutionMap
-	{
-		ask gridHeatmaps overlapping (current_path.shape)
-		{
+	action updatePollutionMap {
+		ask gridHeatmaps overlapping (current_path.shape) {
 			pollution_level <- pollution_level + 1;
 		}
 
 	}
 
-	reflex choose_objective when: my_current_objective = nil
-	{
+	reflex choose_objective when: my_current_objective = nil {
 	//location <- any_location_in(current_place);
 		if current_date.hour != 0 and current_date.hour != 1 and current_date.hour != 2 and current_date.hour != 3 and current_date.hour != 4 and current_date.hour != 5 and
-		current_date.hour != 23 and current_place != living_place
-		{
+		current_date.hour != 23 and current_place != living_place {
 			do wander speed: 0.002;
 		}
 
 		my_current_objective <- objectives first_with ((each.starting_hour = current_date.hour) and (current_date.minute >= each.starting_minute) and (current_place != each.place));
-		if (my_current_objective != nil)
-		{
+		if (my_current_objective != nil) {
 			current_place <- nil;
 			possible_mobility_modes <- ["walking"];
-			if (has_car)
-			{
+			if (has_car) {
 				possible_mobility_modes << "car";
 			}
 
-			if (has_bike)
-			{
+			if (has_bike) {
 				possible_mobility_modes << "bike";
 			}
 
@@ -697,25 +598,19 @@ species people skills: [moving]
 
 	}
 
-	reflex move when: (my_current_objective != nil) and (mobility_mode != "bus")
-	{
-		if ((current_edge != nil) and (mobility_mode in ["car"]))
-		{
+	reflex move when: (my_current_objective != nil) and (mobility_mode != "bus") {
+		if ((current_edge != nil) and (mobility_mode in ["car"])) {
 			road(current_edge).current_concentration <- max([0, road(current_edge).current_concentration - 1]);
 		}
 
-		if (mobility_mode in ["car"])
-		{
+		if (mobility_mode in ["car"]) {
 			do goto target: my_current_objective.place.location on: graph_per_mobility[mobility_mode] move_weights: congestion_map;
-		} else
-		{
+		} else {
 			do goto target: my_current_objective.place.location on: graph_per_mobility[mobility_mode];
 		}
 
-		if (location = my_current_objective.place.location)
-		{
-			if (mobility_mode = "car" and updatePollution = true)
-			{
+		if (location = my_current_objective.place.location) {
+			if (mobility_mode = "car" and updatePollution = true) {
 				do updatePollutionMap;
 			}
 
@@ -723,10 +618,8 @@ species people skills: [moving]
 			location <- any_location_in(current_place);
 			my_current_objective <- nil;
 			mobility_mode <- nil;
-		} else
-		{
-			if ((current_edge != nil) and (mobility_mode in ["car"]))
-			{
+		} else {
+			if ((current_edge != nil) and (mobility_mode in ["car"])) {
 				road(current_edge).current_concentration <- road(current_edge).current_concentration + 1;
 			}
 
@@ -734,22 +627,17 @@ species people skills: [moving]
 
 	}
 
-	reflex move_bus when: (my_current_objective != nil) and (mobility_mode = "bus")
-	{
-		if (bus_status = 0)
-		{
+	reflex move_bus when: (my_current_objective != nil) and (mobility_mode = "bus") {
+		if (bus_status = 0) {
 			do goto target: closest_bus_stop.location on: graph_per_mobility["walking"];
-			if (location = closest_bus_stop.location)
-			{
+			if (location = closest_bus_stop.location) {
 				add self to: closest_bus_stop.waiting_people;
 				bus_status <- 1;
 			}
 
-		} else if (bus_status = 2)
-		{
+		} else if (bus_status = 2) {
 			do goto target: my_current_objective.place.location on: graph_per_mobility["walking"];
-			if (location = my_current_objective.place.location)
-			{
+			if (location = my_current_objective.place.location) {
 				current_place <- my_current_objective.place;
 				closest_bus_stop <- bus_stop with_min_of (each distance_to (self));
 				location <- any_location_in(current_place);
@@ -762,46 +650,30 @@ species people skills: [moving]
 
 	}
 
-	aspect default
-	{
-		if (mobility_mode = nil)
-		{
-			draw circle(size) at: location + { 0, 0, (current_place != nil ? current_place.height : 0.0) + 4 } color: color;
-		} else
-		{
-			if (mobility_mode = "walking")
-			{
+	aspect default {
+		if (mobility_mode = nil) {
+			draw circle(size) at: location + {0, 0, (current_place != nil ? current_place.height : 0.0) + 4} color: color;
+		} else {
+			if (mobility_mode = "walking") {
 				draw circle(size) color: color;
-			} else if (mobility_mode = "bike")
-			{
+			} else if (mobility_mode = "bike") {
 				draw triangle(size) rotate: heading + 90 color: color depth: 8;
-			} else if (mobility_mode = "car")
-			{
+			} else if (mobility_mode = "car") {
 				draw square(size * 2) color: color;
-			}
+			} } }
 
+	aspect base {
+		draw circle(size) at: location + {0, 0, (current_place != nil ? current_place.height : 0.0) + 4} color: color;
+	}
+
+	aspect layer {
+		if (cycle mod 180 = 0) {
+			draw sphere(size) at: {location.x, location.y, cycle * 2} color: color;
 		}
 
-	}
+	} }
 
-	aspect base
-	{
-		draw circle(size) at: location + { 0, 0, (current_place != nil ? current_place.height : 0.0) + 4 } color: color;
-	}
-
-	aspect layer
-	{
-		if (cycle mod 180 = 0)
-		{
-			draw sphere(size) at: { location.x, location.y, cycle * 2 } color: color;
-		}
-
-	}
-
-}
-
-species road
-{
+species road {
 	list<string> mobility_allowed;
 	float capacity;
 	float max_speed <- max_speed_general update: max_speed_general;
@@ -809,28 +681,24 @@ species road
 	float speed_coeff <- 1.0;
 	float timer <- 0.0 update: timer - 1;
 	rgb my_color <- rgb(125, 125, 125);
-	action update_speed_coeff
-	{
+
+	action update_speed_coeff {
 		speed_coeff <- shape.perimeter / max([0.01, exp(-current_concentration / capacity)]);
 	}
 
-	aspect default
-	{
+	aspect default {
 		draw shape color: my_color width: 3;
 	}
 
-	aspect mobility
-	{
+	aspect mobility {
 		string max_mobility <- mobility_allowed with_max_of (width_per_mobility[each]);
 		draw shape width: width_per_mobility[max_mobility] color: color_per_mobility[max_mobility];
 	}
 
-	user_command to_pedestrian_road
-	{
+	user_command to_pedestrian_road {
 		mobility_allowed <- ["walking", "bike"];
-		my_color <- # cornflowerblue;
-		ask world
-		{
+		my_color <- #cornflowerblue;
+		ask world {
 			do compute_graph;
 		}
 
@@ -838,12 +706,10 @@ species road
 		gui_action <- 500;
 	}
 
-	action to_pedestrian_road_ext
-	{
+	action to_pedestrian_road_ext {
 		mobility_allowed <- ["walking", "bike"];
-		my_color <- # cornflowerblue;
-		ask world
-		{
+		my_color <- #cornflowerblue;
+		ask world {
 			do compute_graph;
 		}
 
@@ -851,11 +717,9 @@ species road
 		gui_action <- 1000;
 	}
 
-	action to_normal_road_ext
-	{
+	action to_normal_road_ext {
 		mobility_allowed <- ["walking", "bike", "car"];
-		ask world
-		{
+		ask world {
 			do compute_graph;
 		}
 
@@ -864,10 +728,8 @@ species road
 		gui_action <- 1000;
 	}
 
-	reflex update_gui_action_chart
-	{
-		if (timer = 0)
-		{
+	reflex update_gui_action_chart {
+		if (timer = 0) {
 			gui_action <- 0;
 		}
 
@@ -875,53 +737,45 @@ species road
 
 }
 
-species building
-{
+species building {
 	string usage;
 	string scale;
 	string category;
-	rgb color <- # grey;
+	rgb color <- #grey;
 	int height;
-	aspect default
-	{
+
+	aspect default {
 		draw shape color: color;
 	}
 
-	aspect depth
-	{
-		if category != "Cultural" and name != "building1"
-		{
+	aspect depth {
+		if category != "Cultural" and name != "building1" {
 			draw shape color: color depth: height;
-		} else
-		{
-			draw shape color: # transparent;
+		} else {
+			draw shape color: #transparent;
 		}
 
 	}
 
 }
 
-species externalCities parent: building
-{
+species externalCities parent: building {
 	bool train;
 	string id;
 	string usage <- "R";
 	string scale <- "M";
 	string category <- "R";
-	aspect default
-	{
-		draw circle(20) color: # black border: # white;
+
+	aspect default {
+		draw circle(20) color: #black border: #white;
 	}
 
 }
 
-experiment "Starte Szenario" type: gui
-{
-	user_command "all roads to pedestrian"
-	{
+experiment "Starte Szenario" type: gui {
+	user_command "all roads to pedestrian" {
 		write congestion_map;
-		ask road
-		{
+		ask road {
 			do to_pedestrian_road_ext;
 		}
 
@@ -929,11 +783,9 @@ experiment "Starte Szenario" type: gui
 		write congestion_map;
 	}
 
-	user_command "all roads to normal"
-	{
+	user_command "all roads to normal" {
 		write congestion_map;
-		ask road
-		{
+		ask road {
 			do to_normal_road_ext;
 		}
 
@@ -941,38 +793,33 @@ experiment "Starte Szenario" type: gui
 		write congestion_map;
 	}
 
-	output
-	{
-		display map type: opengl refresh: every(1 # cycle) draw_env: false background: # black # zoom //refresh: every(#hour)
-
+	output {
+		display map type: opengl refresh: every(1 #cycle) draw_env: false background: #black #zoom //refresh: every(#hour)
 		{
 			event [mouse_down] action: click_to_pedestrian_road;
 			event [mouse_down] action: choose_map_interaction;
 			//	event [mouse_down] action: lock_display;
-			overlay position: { 0.1, 0.1 } size: { 240 # px, 680 # px } background: # black transparency: 1.0 border: # black
-			{
-				rgb text_color <- # white;
-				float y <- 60 # px;
-				draw "Gebäudetyp" at: { 40 # px, y } color: text_color font: font("Helvetica", 48, # bold) perspective: false;
-				y <- y + 40 # px;
-				loop type over: color_per_category.keys
-				{
-					draw square(12 # px) at: { 20 # px, y } color: color_per_category[type] border: # white;
-					draw type at: { 40 # px, y + 10 # px } color: color_per_category[type] font: font("Helvetica", 18 # px, # none) perspective: false;
-					y <- y + 35 # px;
+			overlay position: {0.1, 0.1} size: {240 #px, 680 #px} background: #black transparency: 1.0 border: #black {
+				rgb text_color <- #white;
+				float y <- 60 #px;
+				draw "Gebäudetyp" at: {40 #px, y} color: text_color font: font("Helvetica", 48, #bold) perspective: false;
+				y <- y + 40 #px;
+				loop type over: color_per_category.keys {
+					draw square(12 #px) at: {20 #px, y} color: color_per_category[type] border: #white;
+					draw type at: {40 #px, y + 10 #px} color: color_per_category[type] font: font("Helvetica", 18 #px, #none) perspective: false;
+					y <- y + 35 #px;
 				}
 
-				y <- y + 60 # px;
-				draw "Menschen" at: { 40 # px, y } color: text_color font: font("Helvetica", 48, # bold) perspective: false;
-				y <- y + 40 # px;
-				loop type over: color_per_type.keys
-				{
-					draw square(12 # px) at: { 20 # px, y } color: color_per_type[type] border: # white;
-					draw type at: { 40 # px, y + 10 # px } color: color_per_type[type] font: font("Helvetica", 18, # none) perspective: false;
-					y <- y + 35 # px;
+				y <- y + 60 #px;
+				draw "Menschen" at: {40 #px, y} color: text_color font: font("Helvetica", 48, #bold) perspective: false;
+				y <- y + 40 #px;
+				loop type over: color_per_type.keys {
+					draw square(12 #px) at: {20 #px, y} color: color_per_type[type] border: #white;
+					draw type at: {40 #px, y + 10 #px} color: color_per_type[type] font: font("Helvetica", 18, #none) perspective: false;
+					y <- y + 35 #px;
 				}
 
-				y <- y + 30 # px;
+				y <- y + 30 #px;
 
 				//   			 draw "Mobility Mode" at: { 40 # px, 600 # px } color: text_color font: font("Helvetica", 20, # bold) perspective: false;
 				//   			 map<string, rgb> list_of_existing_mobility <- map<string, rgb> (["Walking"::#gold, "Bike"::#orangered, "Car"::#maroon, "Bus"::#lightgrey]);
@@ -996,15 +843,13 @@ experiment "Starte Szenario" type: gui
 			species people aspect: base;
 			species externalCities;
 			species map_interaction_button;
-			graphics "time"
-			{
-				draw string("Uhrzeit: " + current_date.hour) + ":" + string(current_date.minute) color: # darkgrey font: font("FHP Sun Office", 30, # italic) at: {
-				world.shape.width * 0, world.shape.height * 0.99 };
+			graphics "time" {
+				draw string("Uhrzeit: " + current_date.hour) + ":" + string(current_date.minute) color: #darkgrey font: font("FHP Sun Office", 30, #italic) at:
+				{world.shape.width * 0, world.shape.height * 0.99};
 			}
 
-			graphics "hinweis"
-			{
-				draw string("Tippe einzelne Strassen an, um sie für Autos zu sperren!") color: # cornflowerblue font: font("FHP Sun Office", 25, # none) at: { 0, world.shape.height * 0.93 };
+			graphics "hinweis" {
+				draw string("Tippe einzelne Strassen an, um sie für Autos zu sperren!") color: #cornflowerblue font: font("FHP Sun Office", 25, #none) at: {0, world.shape.height * 0.93};
 			}
 
 			//   		 overlay position: { 5, 5 } size: { 240 # px, 680 # px } background: # black transparency: 1.0 border: # black
@@ -1045,14 +890,11 @@ experiment "Starte Szenario" type: gui
 
 		}
 
-		display chart type: opengl background: # black draw_env: false refresh: every(# minute)
-		{
-			image ebw_background_charts position: { 0, 0 } size: { 1, 1 };
-			chart "Fahrten tageweise" type: pie style: ring size: { 0.5, 0.8 } position: { world.shape.width * (0.001), -world.shape.height * 1.1 } background: # transparent color: # black
-			title_font: "FHP Sun" tick_font_size: 0
-			{
-				loop i from: 0 to: length(transport_type_cumulative_usage.keys) - 1
-				{
+		display chart type: opengl background: #black draw_env: false refresh: every(#minute) {
+			image ebw_background_charts position: {0, 0} size: {1, 1};
+			chart "Fahrten tageweise" type: pie style: ring size: {0.5, 0.8} position: {world.shape.width * (0.001), -world.shape.height * 1.1} background: #transparent color: #black
+			title_font: "FHP Sun" tick_font_size: 0 {
+				loop i from: 0 to: length(transport_type_cumulative_usage.keys) - 1 {
 					data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color: color_per_mobility[transport_type_cumulative_usage.keys[i]];
 				}
 
@@ -1067,11 +909,9 @@ experiment "Starte Szenario" type: gui
 			//   			 }
 			//
 			//   		 }
-			chart "Fahrten stundenweise" type: xy size: { 0.5, 0.8 } position: { world.shape.width * (0.45), -world.shape.height * 1.0 } background: # transparent color: # white title_font:
-			"FHP Sun" tick_font_size: 0 legend_font_size: 30 title_font_size: 35
-			{
-				loop i from: 0 to: length(transport_type_cumulative_usage.keys) - 1
-				{
+			chart "Fahrten stundenweise" type: xy size: {0.5, 0.8} position: {world.shape.width * (0.45), -world.shape.height * 1.0} background: #transparent color: #white title_font:
+			"FHP Sun" tick_font_size: 0 legend_font_size: 30 title_font_size: 35 {
+				loop i from: 0 to: length(transport_type_cumulative_usage.keys) - 1 {
 					data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color: color_per_mobility[transport_type_cumulative_usage.keys[i]];
 					data "" value: gui_action;
 					data "" value: max_speed_general;
@@ -1079,10 +919,8 @@ experiment "Starte Szenario" type: gui
 
 			}
 
-			graphics "Nb_Agents:"
-			{
-				draw string(sum_of(transport_type_cumulative_usage.values, each)) color: # white font: font("Helvetica", 28, # bold) at: { world.shape.width * 0.11, 0.71 * world.shape.height
-				};
+			graphics "Nb_Agents:" {
+				draw string(sum_of(transport_type_cumulative_usage.values, each)) color: #white font: font("Helvetica", 28, #bold) at: {world.shape.width * 0.11, 0.71 * world.shape.height};
 				//   			 draw string("   ?") color: # white font: font("Helvetica", 28, # bold) at: { world.shape.width * 0.11, 0.76 * world.shape.height };
 				//   			 draw string("Mobilitäts-Modus: ") color: # white font: font("Helvetica", 28, # none) at: { world.shape.width * 0.62, 0.71 * world.shape.height };
 				//   			 draw string("Zu Fuß") color: # gold font: font("Helvetica", 24, # none) at: { world.shape.width * 0.765, 0.71 * world.shape.height };
@@ -1093,13 +931,10 @@ experiment "Starte Szenario" type: gui
 
 		}
 
-		display chart_2 type: opengl background: # black refresh: every(# day)
-		{
-			chart "Fahrten tageweise" type: series size: { 0.5, 0.8 } position: { world.shape.width * (0.5), -world.shape.height * 1.8 } background: # transparent color: # white
-			title_font: "FHP Sun" legend_font_size: 30 title_font_size: 35
-			{
-				loop i from: 0 to: length(transport_type_cumulative_usage_per_day.keys) - 1
-				{
+		display chart_2 type: opengl background: #black refresh: every(#day) {
+			chart "Fahrten tageweise" type: series size: {0.5, 0.8} position: {world.shape.width * (0.5), -world.shape.height * 1.8} background: #transparent color: #white title_font:
+			"FHP Sun" legend_font_size: 30 title_font_size: 35 {
+				loop i from: 0 to: length(transport_type_cumulative_usage_per_day.keys) - 1 {
 					data transport_type_cumulative_usage_per_day.keys[i] value: transport_type_cumulative_usage_per_day.values[i] color:
 					color_per_mobility[transport_type_cumulative_usage_per_day.keys[i]];
 				}

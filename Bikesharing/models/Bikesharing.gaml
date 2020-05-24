@@ -271,8 +271,9 @@ global {
 	}
 
 	action import_shapefiles {
-		create road from: roads_shapefile {
-			mobility_allowed <- ["walking", "bike", "car", "bus"];
+		create road from: roads_shapefile //TODO with: [mobility_allowed::(string(read("mobility_a")) split_with "|")] 
+		{
+			mobility_allowed <- ["walking", "bike", "car", "bus", "shared_bike"];
 			capacity <- shape.perimeter / 10.0;
 			congestion_map[self] <- 10.0; //shape.perimeter;
 		}

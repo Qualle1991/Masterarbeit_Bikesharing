@@ -892,7 +892,7 @@ experiment "Starte Szenario" type: gui {
 	//monitor test value: current_date.hour refresh: every(1#minute);
 		display map type: opengl refresh: every(1 #cycle) draw_env: false background: #black //refresh: every(#hour)
 		{
-			//	event [mouse_down] action: lock_display;
+			event [mouse_down] action: create_sharing_station;
 			overlay position: {0.1, 0.1} size: {240 #px, 680 #px} background: #black transparency: 1.0 border: #black {
 				rgb text_color <- #white;
 				float y <- 60 #px;

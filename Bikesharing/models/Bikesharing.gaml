@@ -78,13 +78,39 @@ global {
 	
 	init {
 		//gama.pref_display_flat_charts <- true;
-		do import_shapefiles;
+		create road from: roads_shapefile //TODO with: [mobility_allowed::(string(read("mobility_a")) split_with "|")] 
+		{
+			mobility_allowed <- ["walking", "bike", "car", "bus", "shared_bike"];
+			capacity <- shape.perimeter / 10.0;
+			congestion_map[self] <- 10.0; //shape.perimeter;
+		}
+
+		// Buildings including heigt from building level if in data, else random building level between 1 and 5:
+		create building from: buildings_shapefile with: [usage::string(read("usage")), scale::string(read("scale")), category::string(read("category")), level::int(read("building_l"))] {
+			color <- color_per_category[category];
+			if (level > 0) {
+				height <- 2.6 * level;
+			} else {
+				if (category in ["Park", "Cultural"]) {
+					height <- 0.0;
+				} else {
+					height <- 2.6 * rnd(1, 5);
+				}
+
+			}
+
+		}
+
+		create externalCities from: external_shapefile with: [train::bool(get("train"))];
+		create bus_stop from: bus_shapefile;
+		create sharing_station from: bikesharing_shapefile;
+		
 		do profils_data_import;
 		do activity_data_import;
 		do criteria_file_import;
 		do characteristic_file_import;
 		do compute_graph;
-		create bus_stop from: bus_shapefile;
+
 		create bus {
 			stops <- list(bus_stop);
 			location <- first(stops).location;
@@ -270,32 +296,6 @@ global {
 
 	}
 
-	action import_shapefiles {
-		create road from: roads_shapefile //TODO with: [mobility_allowed::(string(read("mobility_a")) split_with "|")] 
-		{
-			mobility_allowed <- ["walking", "bike", "car", "bus", "shared_bike"];
-			capacity <- shape.perimeter / 10.0;
-			congestion_map[self] <- 10.0; //shape.perimeter;
-		}
-
-		// Buildings including heigt from building level if in data, else random building level between 1 and 5:
-		create building from: buildings_shapefile with: [usage::string(read("usage")), scale::string(read("scale")), category::string(read("category")), level::int(read("building_l"))] {
-			color <- color_per_category[category];
-			if (level > 0) {
-				height <- 2.6 * level;
-			} else {
-				if (category in ["Park", "Cultural"]) {
-					height <- 0.0;
-				} else {
-					height <- 2.6 * rnd(1, 5);
-				}
-
-			}
-
-		}
-
-		create externalCities from: external_shapefile with: [train::bool(get("train"))];
-	}
 
 	action compute_graph {
 		loop mobility_mode over: color_per_mobility.keys {

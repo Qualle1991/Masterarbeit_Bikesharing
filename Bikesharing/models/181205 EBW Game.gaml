@@ -1,8 +1,8 @@
-/**
-//* Name: Eberswalde Game   	 
-//* Author: Timo Szczepanska
-* Description: Game on Eberswalde, based on Game It by Tallaindier et al.
-* Tags: Tag1, Tag2, TagN
+/*
+* Name: Bikesharing
+* Author: Pascal Schwerk
+* Description: Game on Luckenwalde with bikesharing, based on Game It by Tallaindier et al. and Eberswalde by //TODO
+* Tags: bikesharing, newmobility
 */
 model Eberswalde_Spiel
 

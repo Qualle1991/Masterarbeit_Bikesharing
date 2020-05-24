@@ -250,6 +250,7 @@ global {
 		write profile_matrix;
 	}
 
+	//Import activity data:
 	action activity_data_import {
 		matrix activity_matrix <- matrix(activity_file);
 		loop i from: 1 to: activity_matrix.rows - 1 {
@@ -269,6 +270,7 @@ global {
 		}
 
 	}
+
 
 	action click_to_pedestrian_road {
 		ask road closest_to #user_location {

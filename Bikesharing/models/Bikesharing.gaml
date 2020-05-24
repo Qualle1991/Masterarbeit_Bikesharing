@@ -198,26 +198,7 @@ global {
 			}
 
 		}
-
-		create map_interaction_button number: 1 with: [button_name::"Alle Strassen für Autos sperren", type:: 1, location::{0, world.shape.height * 0.8}];
-		//create map_interaction_button number: 1 with: [button_name::"Alle Strassen für Autos freigeben", type:: 2, location::{ 0, world.shape.height * 0.8 }];
-	}
-
-	action choose_map_interaction {
-		ask map_interaction_button overlapping (rectangle(1100, 100) at_location #user_location) {
-			ask map_interaction_button {
-				active <- false;
-			}
-
-			active <- true;
-			if (self.type = 1) {
-				do all_roads_to_pedestrian;
-			} else {
-				do all_roads_to_normal;
-			}
-
-		}
-
+	//init end:
 	}
 
 	action profils_data_import {

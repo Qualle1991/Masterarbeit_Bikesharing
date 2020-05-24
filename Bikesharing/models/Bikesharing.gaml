@@ -521,7 +521,7 @@ species people skills: [moving] {
 				string act_real <- one_of(parse_act);
 				list<building> possible_bds;
 				if (length(act_real) = 2) and (first(act_real) = "R") {
-					possible_bds <- self.living_place;
+					possible_bds <- [self.living_place];
 					//possible_bds <- building where ((each.usage = "R") and (each.scale = last(act_real)));
 				} else if (length(act_real) = 2) and (first(act_real) = "O") {
 					possible_bds <- building where ((each.usage = "O") and (each.scale = last(act_real)));

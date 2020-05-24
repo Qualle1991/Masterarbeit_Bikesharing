@@ -271,14 +271,6 @@ global {
 
 	}
 
-
-	action click_to_pedestrian_road {
-		ask road closest_to #user_location {
-			do to_pedestrian_road_ext;
-		}
-
-	}
-
 	action criteria_file_import {
 		matrix criteria_matrix <- matrix(criteria_file);
 		int nbCriteria <- criteria_matrix[1, 0] as int;

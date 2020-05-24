@@ -429,6 +429,16 @@ species bus skills: [moving] {
 
 }
 
+species sharing_station {
+	//sharing_stations have a list of parked_bikes:
+	list<shared_bike> parked_bikes;
+
+
+	aspect default {
+		draw hexagon(10, 10) color: empty(parked_bikes) ? #white : #red border: #red;
+	}
+
+}
 
 species people skills: [moving] {
 	string type;

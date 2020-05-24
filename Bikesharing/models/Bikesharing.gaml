@@ -51,14 +51,13 @@ global {
 	file profile_file;
 
 	//MAPS
-	map<string, rgb>
-	color_per_category <- ["Restaurant"::#dimgray, "Night"::#dimgray, "GP"::#dimgray, "Cultural"::#dimgray, "Shopping"::#dimgray, "HS"::#darkorange, "Uni"::#gamared, "O"::#gray, "R"::#dimgray, "Park"::#transparent];
-	map<string, rgb>
-	color_per_type <- ["Studierende"::#purple, "Schueler"::#gamablue, "Arbeitnehmer"::#cornflowerblue, "Fuehrungskraefte"::#lightgrey, "Heimzentrierte"::#yellow, "Rentner"::#mediumturquoise];
+	map<string, rgb> color_per_category <- ["Restaurant"::#green, "Night"::#dimgray, "GP"::#dimgray, "Cultural"::#green, "Park"::#green, "Shopping"::#green, "HS"::#darkorange, "Uni"::#pink, "O"::#gray, "R"::#grey];
+	map<string, rgb> color_per_type <- ["Studierende"::#purple, "Schueler"::#gamablue, "Arbeitnehmer"::#cornflowerblue, "Fuehrungskraefte"::#lightgrey, "Heimzentrierte"::#yellow, "Rentner"::#mediumturquoise];
 	map<string, map<string, int>> activity_data;
 	map<string, float> proportion_per_type;
 	map<string, float> proba_bike_per_type;
 	map<string, float> proba_car_per_type;
+	map<string, float> proba_bikesharing_per_type;
 	map<string, rgb> color_per_mobility;
 	map<string, float> width_per_mobility;
 	map<string, float> speed_per_mobility;

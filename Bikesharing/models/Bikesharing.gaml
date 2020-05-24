@@ -599,13 +599,6 @@ species people skills: [moving] {
 
 	}
 
-	//reflex at_home_chill
-	//{
-	//    if self.location = self.living_place
-	//    {
-	//   	 
-	//    }
-	//}
 	list<list> mobility_mode_eval {
 		list<list> candidates;
 		loop mode over: possible_mobility_modes {

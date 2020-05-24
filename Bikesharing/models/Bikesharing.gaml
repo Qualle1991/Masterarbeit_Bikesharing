@@ -150,24 +150,19 @@ global {
 		// mobility_graph:
 		do compute_graph;
 		
+		// inital number of people created:
 		create people number: nb_people {
-		//   		 type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
-		//   		 has_car <- flip(proba_car_per_type[type]);
-		//   		 has_bike <- flip(proba_bike_per_type[type]);
-		//   		 living_place <- one_of(building where (each.usage = "R"));
-		//   		 current_place <- living_place;
-		//   		 location <- any_location_in(living_place);
-		//   		 color <- color_per_type[type];
-		//   		 closest_bus_stop <- bus_stop with_min_of (each distance_to (self));
-		//   		 do create_trip_objectives;
 			type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
-			has_car <- true;
-			has_bike <- true;
+			vehicle_in_use <- nil;
+			has_car <- flip(proba_car_per_type[type]);
+			has_bike <- flip(proba_bike_per_type[type]);
+			has_bikesharing <- flip(proba_bikesharing_per_type[type]);
 			living_place <- one_of(building where (each.usage = "R"));
 			current_place <- living_place;
 			location <- any_location_in(living_place);
 			color <- color_per_type[type];
 			closest_bus_stop <- bus_stop with_min_of (each distance_to (self));
+			closest_sharing_station <- sharing_station with_min_of (each distance_to (self));
 			do create_trip_objectives;
 		}
 

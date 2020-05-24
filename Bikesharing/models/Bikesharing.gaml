@@ -271,6 +271,7 @@ global {
 
 	}
 
+	//Import criteria data:
 	action criteria_file_import {
 		matrix criteria_matrix <- matrix(criteria_file);
 		int nbCriteria <- criteria_matrix[1, 0] as int;

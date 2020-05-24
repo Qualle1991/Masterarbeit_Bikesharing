@@ -579,7 +579,7 @@ species people skills: [moving] {
 
 		transport_type_cumulative_usage[mobility_mode] <- transport_type_cumulative_usage[mobility_mode] + 1;
 		speed <- speed_per_mobility[mobility_mode];
-		//    write criteria_WM;
+
 	}
 
 	action back_home {

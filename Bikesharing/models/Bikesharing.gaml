@@ -14,6 +14,12 @@ global {
 	// case_study needs a folder named like the city in focus
 	string case_study <- "luckenwalde";
 	string EPSG <- "EPSG:25833";
+	//URL for Google Forms result:
+	string url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdj4Dvf3TyVUgbW2jF3YN7NXbrN1qUGa3XGhiiiMiARxpMXsKRyzugMY3eglHjsRLLtZPiOhbOEG1e/pub?gid=2013234065&single=true&output=csv";
+	
+	//USER INTERACTION:	
+	//Choice for using Google forms instead of fixed profile_file:
+	string profile_input_mode <- "Feste Profil-Datei" among: ["Feste Profil-Datei", "Google Umfrage"] parameter: "Profil Import" category: "Voreinstellung";
 	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 100 max: 1000;
 	int nb_pendler <- 100 parameter: "Anzahl der Pendler: " min: 100 max: 1000;
 	string GISFolder <- "./../includes/City/" + case_study;

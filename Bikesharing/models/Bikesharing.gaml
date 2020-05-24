@@ -326,7 +326,6 @@ global {
 
 	}
 
-
 	//Create graph per mobility:
 	action compute_graph {
 		loop mobility_mode over: color_per_mobility.keys {
@@ -345,10 +344,9 @@ global {
 	//
 	//    }
 
-
-	reflex save_bug_attribute when: (false) {
-		write "transport_type_cumulative_usage" + transport_type_cumulative_usage;
-		save [transport_type_cumulative_usage.values[0], transport_type_cumulative_usage.values[1], transport_type_cumulative_usage.values[2], transport_type_cumulative_usage.values[3]]
+	//Save cumulative usage:
+	reflex save_mobility_data when: (true) {
+		save [transport_type_cumulative_usage.values[0], transport_type_cumulative_usage.values[1], transport_type_cumulative_usage.values[2], transport_type_cumulative_usage.values[3], transport_type_cumulative_usage.values[4]]
 		rewrite: false to: "../results/mobility.csv" type: "csv";
 	}
 

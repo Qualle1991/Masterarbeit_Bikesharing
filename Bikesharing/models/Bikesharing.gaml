@@ -26,13 +26,15 @@ global {
 	//Choice for sharing_station-creation-mode:
 	string creation_mode <- "Off" among: ["On", "Off"] parameter: "Klickaktion" category: "Interaktion";
 	
-	string GISFolder <- "./../includes/City/" + case_study;
-	file<geometry> buildings_shapefile <- file<geometry>(GISFolder + "/buildings.shp");
-	file<geometry> external_shapefile <- file<geometry>(GISFolder + "/externalCities.shp");
-	file<geometry> roads_shapefile <- file<geometry>(GISFolder + "/roads.shp");
-	file<geometry> bus_shapefile <- file<geometry>(GISFolder + "/bus_stops_new.shp");
-	file ebw_background <- file(GISFolder + "/background.jpg");
-	file ebw_background_charts <- file(GISFolder + "/charts.jpg");
+	//Shapefiles:
+	string ProjectFolder <- "./../includes/City/" + case_study;
+	file<geometry> buildings_shapefile <- shape_file(ProjectFolder + "/buildings.shp");
+	file<geometry> external_shapefile <- shape_file(ProjectFolder + "/external_cities.shp");
+	file<geometry> roads_shapefile <- shape_file(ProjectFolder + "/roads.shp");
+	//file<geometry> roads_shapefile <- shape_file(ProjectFolder + "/200219 Luckenwalde highways 1437.shp");
+	file<geometry> bus_shapefile <- shape_file(ProjectFolder + "/bus_stops.shp");
+	file<geometry> bikesharing_shapefile <- shape_file(ProjectFolder + "/sharing_stations.shp");
+	//file background_img <- file(GISFolder + "/background.jpg");
 	geometry shape <- envelope(roads_shapefile);
 
 	//ROAD SPEED LIMIT

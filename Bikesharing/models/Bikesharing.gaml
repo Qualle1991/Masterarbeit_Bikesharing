@@ -599,6 +599,7 @@ species people skills: [moving] {
 
 	}
 
+	//Evaluation of mobility_modes:
 	list<list> mobility_mode_eval {
 		list<list> candidates;
 		loop mode over: possible_mobility_modes {
@@ -616,7 +617,7 @@ species people skills: [moving] {
 			add cand to: candidates;
 		}
 
-		//normalisation
+		//normalisation:
 		list<float> max_values;
 		loop i from: 0 to: length(candidates[0]) - 1 {
 			max_values << max(candidates collect abs(float(each[i])));

@@ -367,11 +367,7 @@ global {
 
 	}
 
-	//    reflex report_cumulative_trips_per_day
-	//    {
-	//   	 write transport_type_cumulative_usage_per_day;
-	//    }
-
+//global end:
 }
 
 species map_interaction_button {

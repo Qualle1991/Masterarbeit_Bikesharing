@@ -105,12 +105,6 @@ global {
 		create externalCities from: external_shapefile with: [train::bool(get("train"))];
 		create bus_stop from: bus_shapefile;
 		create sharing_station from: bikesharing_shapefile;
-		
-		do profils_data_import;
-		do activity_data_import;
-		do criteria_file_import;
-		do characteristic_file_import;
-		do compute_graph;
 
 		// Bus EBW
 		create bus {
@@ -147,6 +141,15 @@ global {
 			add self to: closest_sharing_station.parked_bikes;
 		}
 
+		// imports for people data:
+		do import_profile_file;
+		do profils_data_import;
+		do activity_data_import;
+		do criteria_file_import;
+		do characteristic_file_import;
+		// mobility_graph:
+		do compute_graph;
+		
 		create people number: nb_people {
 		//   		 type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
 		//   		 has_car <- flip(proba_car_per_type[type]);

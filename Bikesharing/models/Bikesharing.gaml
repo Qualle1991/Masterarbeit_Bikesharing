@@ -718,23 +718,34 @@ species people skills: [moving] {
 		
 	}
 
+	//Move according to the selected mobility mode bus:
 	reflex move_bus when: (my_current_objective != nil) and (mobility_mode = "bus") {
+	//Person has to go to the bus_stop:
 		if (bus_status = 0) {
+		//do goto target:(road with_min_of (each distance_to (self)));
 			do goto target: closest_bus_stop.location on: graph_per_mobility["walking"];
+			counter_rides <- counter_rides + 1;			
 			if (location = closest_bus_stop.location) {
 				add self to: closest_bus_stop.waiting_people;
 				bus_status <- 1;
 			}
 
-		} else if (bus_status = 2) {
+		}
+		//Person has arrived at the desired bus_stop and walks the last piece to the destination:
+		else if (bus_status = 2) {
+			//do goto target:(road with_min_of (each distance_to (self)));
 			do goto target: my_current_objective.place.location on: graph_per_mobility["walking"];
+			//Person has arrived finally:
 			if (location = my_current_objective.place.location) {
 				current_place <- my_current_objective.place;
-				closest_bus_stop <- bus_stop with_min_of (each distance_to (self));
 				location <- any_location_in(current_place);
 				my_current_objective <- nil;
+				closest_bus_stop <- bus_stop with_min_of (each distance_to (self));
+				closest_sharing_station <- sharing_station with_min_of (each distance_to (self));
+				add mobility_mode to: latest_modes;
 				mobility_mode <- nil;
 				bus_status <- 0;
+				counter_succeeded <- counter_succeeded + 1;
 			}
 
 		}

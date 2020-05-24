@@ -841,7 +841,7 @@ species road {
 	action update_speed_coeff {
 		speed_coeff <- shape.perimeter / max([0.01, exp(-current_concentration / capacity)]);
 	}
-
+	
 	aspect default {
 		draw shape color: my_color width: 3;
 	}
@@ -865,19 +865,11 @@ species building {
 	string scale;
 	string category;
 	rgb color <- #grey;
-	int height;
+	int level;
+	float height;
 
 	aspect default {
-		draw shape color: color;
-	}
-
-	aspect depth {
-		if category != "Cultural" and name != "building1" {
-			draw shape color: color depth: height;
-		} else {
-			draw shape color: #transparent;
-		}
-
+		draw shape color: color depth: height;
 	}
 
 }

@@ -636,13 +636,6 @@ species people skills: [moving] {
 		return candidates;
 	}
 
-	action updatePollutionMap {
-		ask gridHeatmaps overlapping (current_path.shape) {
-			pollution_level <- pollution_level + 1;
-		}
-
-	}
-
 	reflex choose_objective when: my_current_objective = nil {
 	//location <- any_location_in(current_place);
 		if current_date.hour != 0 and current_date.hour != 1 and current_date.hour != 2 and current_date.hour != 3 and current_date.hour != 4 and current_date.hour != 5 and

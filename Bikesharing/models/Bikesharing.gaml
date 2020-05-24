@@ -45,11 +45,9 @@ global {
 
 	// MOBILITY DATA
 	list<string> mobility_list <- ["walking", "bike", "car", "bus", "shared_bike"];
-	file activity_file <- file("./../includes/game_IT/ActivityPerProfile.csv");
-	file criteria_file <- file("./../includes/game_IT/CriteriaFile.csv");
-	file profile_file <- file("./../includes/game_IT/Profiles.csv");
-	file mode_file <- file("./../includes/game_IT/Modes.csv");
-	file mode_file_city_maut <- file("./../includes/game_IT/Modes_City_Maut.csv");
+	file activity_file <- file(ProjectFolder + "profiles_and_modes/ActivityPerProfile.csv");
+	file criteria_file <- file(ProjectFolder + "profiles_and_modes/CriteriaFile.csv");
+	file mode_file <- file(ProjectFolder + "profiles_and_modes/Modes.csv");
 
 	//MAPS
 	map<string, rgb>

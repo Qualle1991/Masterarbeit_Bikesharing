@@ -42,8 +42,6 @@ global {
 
 	//User Interaction in Charts abbilden
 	int gui_action <- 0;
-	//Szenario-Buttons
-	string szenario <- "Standard" among: ["Standard", "City-Maut", "Walking-App", "Fahrrad-Förderung"] parameter: "Szenario:" category: "Modell";
 
 	// MOBILITY DATA
 	list<string> mobility_list <- ["walking", "bike", "car", "bus"];

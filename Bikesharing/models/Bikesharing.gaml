@@ -44,7 +44,7 @@ global {
 	int gui_action <- 0;
 
 	// MOBILITY DATA
-	list<string> mobility_list <- ["walking", "bike", "car", "bus"];
+	list<string> mobility_list <- ["walking", "bike", "car", "bus", "shared_bike"];
 	file activity_file <- file("./../includes/game_IT/ActivityPerProfile.csv");
 	file criteria_file <- file("./../includes/game_IT/CriteriaFile.csv");
 	file profile_file <- file("./../includes/game_IT/Profiles.csv");

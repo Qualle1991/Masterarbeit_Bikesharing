@@ -432,10 +432,11 @@ species bus skills: [moving] {
 species sharing_station {
 	//sharing_stations have a list of parked_bikes:
 	list<shared_bike> parked_bikes;
-
+	//The height shows how many shared_bikes are parked at the sharing_station:
+	float height <- 50.0 update: 50.0 + 50.0 * length(parked_bikes);
 
 	aspect default {
-		draw hexagon(10, 10) color: empty(parked_bikes) ? #white : #red border: #red;
+		draw hexagon(10, 10) color: empty(parked_bikes) ? #white : #red border: #red depth: height;
 	}
 
 }

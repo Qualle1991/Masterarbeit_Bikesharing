@@ -137,6 +137,15 @@ global {
 		}
 		* 
 		*/
+		
+		// shared_bikes are distributed randomly at the sharing_stations:
+		create shared_bike number: nb_shared_bikes {
+			location <- one_of(sharing_station).location;
+			in_use <- false;
+			closest_sharing_station <- sharing_station with_min_of (each distance_to (self));
+			color <- #red;
+			add self to: closest_sharing_station.parked_bikes;
+		}
 
 		create people number: nb_people {
 		//   		 type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];

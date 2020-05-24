@@ -370,6 +370,8 @@ global {
 //global end:
 }
 
+//DEFINITION OF DIFFERENT SPECIES:
+
 species trip_objective {
 	building place;
 	int starting_hour;

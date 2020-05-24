@@ -233,6 +233,7 @@ global {
 
 	}
 			
+	//Import profile data:
 	action profils_data_import {
 		matrix profile_matrix <- matrix(profile_file);
 		loop i from: 0 to: profile_matrix.rows - 1 {
@@ -240,11 +241,13 @@ global {
 			if (profil_type != "") {
 				proba_car_per_type[profil_type] <- float(profile_matrix[2, i]);
 				proba_bike_per_type[profil_type] <- float(profile_matrix[3, i]);
-				proportion_per_type[profil_type] <- float(profile_matrix[4, i]);
+				proba_bikesharing_per_type[profil_type] <- float(profile_matrix[4, i]);
+				proportion_per_type[profil_type] <- float(profile_matrix[5, i]);
 			}
 
 		}
 
+		write profile_matrix;
 	}
 
 	action activity_data_import {

@@ -163,7 +163,7 @@ global {
 			color <- color_per_type[type];
 			closest_bus_stop <- bus_stop with_min_of (each distance_to (self));
 			closest_sharing_station <- sharing_station with_min_of (each distance_to (self));
-			do create_trip_objectives;
+			do create_activites;
 		}
 
 		//nb_pendler
@@ -194,7 +194,7 @@ global {
 				color <- color_per_type[type];
 				closest_bus_stop <- bus_stop with_min_of (each distance_to (self));
 				closest_sharing_station <- sharing_station with_min_of (each distance_to (self));
-				do create_trip_objectives;
+				do create_activites;
 			}
 
 		}
@@ -512,7 +512,7 @@ species people skills: [moving] {
 	shared_bike current_shared_bike <- nil;
 	list latest_modes;
 
-	action create_trip_objectives {
+	action create_activites {
 		map<string, int> activities <- activity_data[type];
 		//if (activities = nil ) or (empty(activities)) {write "my type: " + type;}
 		loop act over: activities.keys {
@@ -534,14 +534,14 @@ species people skills: [moving] {
 					write "problem with act_real: " + act_real;
 				}
 
-				do create_activity(act_real, act_build, activities[act]);
+				do create_trip_objectives(act_real, act_build, activities[act]);
 			}
 
 		}
 
 	}
 
-	action create_activity (string act_name, building act_place, int act_time) {
+	action create_trip_objectives (string act_name, building act_place, int act_time) {
 		create trip_objective {
 			name <- act_name;
 			place <- act_place;

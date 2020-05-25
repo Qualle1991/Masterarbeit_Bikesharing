@@ -467,7 +467,7 @@ species sharing_station {
 	}
 
 	// Distribute bicycles evenly among stations at fixed times:
-	reflex disposition when: current_date.hour = 0 {
+	reflex disposition when: current_date.hour = 5 {
 		do collect_bikes;
 		do distribute_bikes;
 	}

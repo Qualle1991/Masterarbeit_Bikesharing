@@ -260,7 +260,7 @@ global {
 			loop j from: 1 to: activity_matrix.columns - 1 {
 				string act <- activity_matrix[j, i];
 				if (act != current_activity) {
-					activities[act] <- j;
+					activities[act] <- j-1;
 					current_activity <- act;
 				}
 

@@ -399,7 +399,7 @@ species bus skills: [moving] {
 
 	// Bus ride routine:
 	reflex ride {
-		do goto target: my_target.location on: graph_per_mobility["car"] speed: speed_per_mobility["bus"];
+		do goto target: my_target.location;// on: graph_per_mobility["car"] speed: speed_per_mobility["bus"];
 		if (location = my_target.location) {
 		//release people according to stop_passengers list:
 			ask stop_passengers[my_target] {

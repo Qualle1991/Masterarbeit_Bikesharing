@@ -331,15 +331,15 @@ global {
 
 	}
 
-	//    reflex update_road_weights
-	//    {
-	//   	 ask road
-	//   	 {
-	//   		 do update_speed_coeff;
-	//   		 congestion_map[self] <- speed_coeff;
-	//   	 }
-	//
-	//    }
+	    reflex update_road_weights
+	    {
+	   	 ask road
+	   	 {
+	   		 do update_speed_coeff;
+	   		 congestion_map[self] <- speed_coeff;
+	   	 }
+	
+	    }
 
 	//Save cumulative usage:
 	reflex save_mobility_data when: (true) {

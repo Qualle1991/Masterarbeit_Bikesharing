@@ -588,7 +588,6 @@ species people skills: [moving] {
 		vehicle_in_use <- nil;
 		my_current_objective <- nil;
 		mobility_mode <- nil;
-		write self.name + " had to go home";
 	}
 
 	//Sometimes it happens that people do not get back home independently, this is to reset peoples' location to home again:

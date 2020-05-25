@@ -681,13 +681,13 @@ species people skills: [moving] {
 		}
 		  
 		if (mobility_mode in ["car"]) {
-		//do goto target:(road with_min_of (each distance_to (self)));
-			do goto target: my_current_objective.place.location on: graph_per_mobility[mobility_mode] move_weights: congestion_map;
+			//do goto target:(road with_min_of (each distance_to (self)));
+			do goto target: my_current_objective.place.location;// on: graph_per_mobility[mobility_mode] move_weights: congestion_map;
 			counter_rides <- counter_rides + 1;
 
 		} else {
-		//do goto target:(road with_min_of (each distance_to (self)));
-			do goto target: my_current_objective.place.location on: graph_per_mobility[mobility_mode];
+			//do goto target:(road with_min_of (each distance_to (self)));
+			do goto target: my_current_objective.place.location;// on: graph_per_mobility[mobility_mode];
 			counter_rides <- counter_rides + 1;
 
 		}
@@ -722,8 +722,8 @@ species people skills: [moving] {
 	reflex move_bus when: (my_current_objective != nil) and (mobility_mode = "bus") {
 	//Person has to go to the bus_stop:
 		if (bus_status = 0) {
-		//do goto target:(road with_min_of (each distance_to (self)));
-			do goto target: closest_bus_stop.location on: graph_per_mobility["walking"];
+			//do goto target:(road with_min_of (each distance_to (self)));
+			do goto target: closest_bus_stop.location;// on: graph_per_mobility["walking"];
 			counter_rides <- counter_rides + 1;			
 			if (location = closest_bus_stop.location) {
 				add self to: closest_bus_stop.waiting_people;
@@ -734,7 +734,7 @@ species people skills: [moving] {
 		//Person has arrived at the desired bus_stop and walks the last piece to the destination:
 		else if (bus_status = 2) {
 			//do goto target:(road with_min_of (each distance_to (self)));
-			do goto target: my_current_objective.place.location on: graph_per_mobility["walking"];
+			do goto target: my_current_objective.place.location;// on: graph_per_mobility["walking"];
 			//Person has arrived finally:
 			if (location = my_current_objective.place.location) {
 				current_place <- my_current_objective.place;
@@ -756,8 +756,8 @@ species people skills: [moving] {
 	reflex move_shared_bike when: (my_current_objective != nil) and (mobility_mode = "shared_bike") {
 	//Not yet started riding the shared_bike --> go to closest sharing_station:
 		if (shared_bike_status = 0) {
-		//do goto target:(road with_min_of (each distance_to (self)));
-			do goto target: closest_sharing_station.location on: graph_per_mobility["walking"];
+			//do goto target:(road with_min_of (each distance_to (self)));
+			do goto target: closest_sharing_station.location;// on: graph_per_mobility["walking"];
 			//Person has found a bike and takes it to the sharing_station next to the target:
 			if (location = closest_sharing_station.location and length(self.closest_sharing_station.parked_bikes) > 0) {
 				shared_bike_status <- 1;
@@ -765,7 +765,7 @@ species people skills: [moving] {
 				current_shared_bike.in_use <- true;
 				remove closest_sharing_station.parked_bikes[0] from: closest_sharing_station.parked_bikes;
 				//do goto target:(road with_min_of (each distance_to (self)));
-				do goto target: sharing_station with_min_of (each distance_to (my_current_objective)) on: graph_per_mobility["shared_bike"];
+				do goto target: sharing_station with_min_of (each distance_to (my_current_objective));// on: graph_per_mobility["shared_bike"];
 				counter_rides <- counter_rides + 1;
 			}
 			// If a person arrives at the sharing_station and someone else took the last shared_bike before:
@@ -783,7 +783,7 @@ species people skills: [moving] {
 				current_shared_bike.in_use <- false;
 
 				//do goto target:(road with_min_of (each distance_to (self)));
-				do goto target: my_current_objective.place.location on: graph_per_mobility["walking"];
+				do goto target: my_current_objective.place.location;// on: graph_per_mobility["walking"];
 			}
 
 			//Person finally arrived:

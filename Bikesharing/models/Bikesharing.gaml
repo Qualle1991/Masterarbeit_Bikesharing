@@ -588,10 +588,11 @@ species people skills: [moving] {
 		vehicle_in_use <- nil;
 		my_current_objective <- nil;
 		mobility_mode <- nil;
+		write self.name + " had to go home";
 	}
 
 	//Sometimes it happens that people do not get back home independently, this is to reset peoples' location to home again:
-	reflex home when: current_date.hour = rnd(3, 7) and self.location != self.living_place and bus_status = 0 {
+	reflex home when: current_date.hour = rnd(3, 7) and self.current_place != self.living_place and bus_status = 0 {
 		//if current_date.hour = rnd(0, 3) and self.location != self.living_place and bus_status = 0 {
 			do back_home;
 

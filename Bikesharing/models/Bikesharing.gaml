@@ -15,17 +15,18 @@ global {
 	string case_study <- "luckenwalde";
 	string EPSG <- "EPSG:25833";
 	//URL for Google Forms result:
-	string url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdj4Dvf3TyVUgbW2jF3YN7NXbrN1qUGa3XGhiiiMiARxpMXsKRyzugMY3eglHjsRLLtZPiOhbOEG1e/pub?gid=2013234065&single=true&output=csv";
-	
+	string
+	url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdj4Dvf3TyVUgbW2jF3YN7NXbrN1qUGa3XGhiiiMiARxpMXsKRyzugMY3eglHjsRLLtZPiOhbOEG1e/pub?gid=2013234065&single=true&output=csv";
+
 	//USER INTERACTION:	
 	//Choice for using Google forms instead of fixed profile_file:
 	string profile_input_mode <- "Feste Profil-Datei" among: ["Feste Profil-Datei", "Google Umfrage"] parameter: "Profil Import" category: "Voreinstellung";
 	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 1 max: 10000 category: "Voreinstellung";
-	int nb_pendler <- 25 parameter: "Anzahl der Pendler: " min: 5 max: 1000category: "Voreinstellung";
-	int nb_shared_bikes <- 200 parameter: "Anzahl der Shared Bikes: " min: 0 max: 1000category: "Voreinstellung";
+	int nb_pendler <- 25 parameter: "Anzahl der Pendler: " min: 5 max: 1000 category: "Voreinstellung";
+	int nb_shared_bikes <- 200 parameter: "Anzahl der Shared Bikes: " min: 0 max: 1000 category: "Voreinstellung";
 	//Choice for sharing_station-creation-mode:
 	string creation_mode <- "Off" among: ["On", "Off"] parameter: "Klickaktion" category: "Interaktion";
-	
+
 	//Shapefiles:
 	string ProjectFolder <- "./../includes/City/" + case_study;
 	file<geometry> buildings_shapefile <- shape_file(ProjectFolder + "/buildings.shp");
@@ -48,8 +49,10 @@ global {
 	file profile_file;
 
 	//MAPS
-	map<string, rgb> color_per_category <- ["Restaurant"::#green, "Night"::#dimgray, "GP"::#dimgray, "Cultural"::#green, "Park"::#green, "Shopping"::#green, "HS"::#darkorange, "Uni"::#pink, "O"::#gray, "R"::#grey];
-	map<string, rgb> color_per_type <- ["Studierende"::#purple, "Schueler"::#gamablue, "Arbeitnehmer"::#cornflowerblue, "Fuehrungskraefte"::#lightgrey, "Heimzentrierte"::#yellow, "Rentner"::#mediumturquoise];
+	map<string, rgb>
+	color_per_category <- ["Restaurant"::#green, "Night"::#dimgray, "GP"::#dimgray, "Cultural"::#green, "Park"::#green, "Shopping"::#green, "HS"::#darkorange, "Uni"::#pink, "O"::#gray, "R"::#grey];
+	map<string, rgb>
+	color_per_type <- ["Studierende"::#purple, "Schueler"::#gamablue, "Arbeitnehmer"::#cornflowerblue, "Fuehrungskraefte"::#lightgrey, "Heimzentrierte"::#yellow, "Rentner"::#mediumturquoise];
 	map<string, map<string, int>> activity_data;
 	map<string, float> proportion_per_type;
 	map<string, float> proba_bike_per_type;
@@ -72,10 +75,9 @@ global {
 	int counter_rides <- 0;
 	int counter_succeeded <- 0;
 	int count_missed_bike <- 0;
-	
+
 	init {
 		//gama.pref_display_flat_charts <- true;
-		
 		create road from: roads_shapefile //TODO with: [mobility_allowed::(string(read("mobility_a")) split_with "|")] 
 		{
 			mobility_allowed <- ["walking", "bike", "car", "bus", "shared_bike"];
@@ -110,7 +112,7 @@ global {
 			stop_passengers <- map<bus_stop, list<people>>(stops collect (each::[]));
 		}
 
-/*
+		/*
 		// Four Busses for Luckenwalde to simulate an hourly cycle:
 		loop i from: 0 to: 3 {
 			create bus {
@@ -126,7 +128,6 @@ global {
 			}
 
 		}
-		* 
 		*/
 		
 		// shared_bikes are distributed randomly at the sharing_stations:
@@ -146,7 +147,7 @@ global {
 		do characteristic_file_import;
 		// mobility_graph:
 		do compute_graph;
-		
+
 		// inital number of people created:
 		create people number: nb_people {
 			type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
@@ -166,7 +167,7 @@ global {
 		//nb_pendler
 		ask externalCities {
 			create people number: nb_pendler {
-				//TODO (Ein)pendler sollten nur Arbeitnehmer sein
+			//TODO (Ein)pendler sollten nur Arbeitnehmer sein
 				type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
 				if myself.train = true {
 					has_bike <- flip(proba_bike_per_type[type]);
@@ -195,14 +196,12 @@ global {
 			}
 
 		}
-	//init end:
+//init end:
 	}
 
-	reflex update_buildings_distribution
-	{
+	reflex update_buildings_distribution {
 		buildings_distribution <- map(color_per_category.keys collect (each::0));
-		ask building
-		{
+		ask building {
 			buildings_distribution[usage] <- buildings_distribution[usage] + 1;
 		}
 
@@ -229,7 +228,7 @@ global {
 		}
 
 	}
-			
+
 	//Import profile data:
 	action profils_data_import {
 		matrix profile_matrix <- matrix(profile_file);
@@ -257,7 +256,7 @@ global {
 			loop j from: 1 to: activity_matrix.columns - 1 {
 				string act <- activity_matrix[j, i];
 				if (act != current_activity) {
-					activities[act] <- j-1;
+					activities[act] <- j - 1;
 					current_activity <- act;
 				}
 
@@ -331,19 +330,18 @@ global {
 
 	}
 
-	    reflex update_road_weights
-	    {
-	   	 ask road
-	   	 {
-	   		 do update_speed_coeff;
-	   		 congestion_map[self] <- speed_coeff;
-	   	 }
-	
-	    }
+	reflex update_road_weights {
+		ask road {
+			do update_speed_coeff;
+			congestion_map[self] <- speed_coeff;
+		}
+
+	}
 
 	//Save cumulative usage:
 	reflex save_mobility_data when: (true) {
-		save [transport_type_cumulative_usage.values[0], transport_type_cumulative_usage.values[1], transport_type_cumulative_usage.values[2], transport_type_cumulative_usage.values[3], transport_type_cumulative_usage.values[4]]
+		save
+		[transport_type_cumulative_usage.values[0], transport_type_cumulative_usage.values[1], transport_type_cumulative_usage.values[2], transport_type_cumulative_usage.values[3], transport_type_cumulative_usage.values[4]]
 		rewrite: false to: "../results/mobility.csv" type: "csv";
 	}
 
@@ -368,7 +366,6 @@ global {
 }
 
 //DEFINITION OF DIFFERENT SPECIES:
-
 species trip_objective {
 	building place;
 	int starting_hour;
@@ -399,7 +396,7 @@ species bus skills: [moving] {
 
 	// Bus ride routine:
 	reflex ride {
-		do goto target: my_target.location;// on: graph_per_mobility["car"] speed: speed_per_mobility["bus"];
+		do goto target: my_target.location; // on: graph_per_mobility["car"] speed: speed_per_mobility["bus"];
 		if (location = my_target.location) {
 		//release people according to stop_passengers list:
 			ask stop_passengers[my_target] {
@@ -416,7 +413,7 @@ species bus skills: [moving] {
 
 			my_target.waiting_people <- [];
 			my_target <- nil;
-		} 
+		}
 
 	}
 
@@ -576,7 +573,6 @@ species people skills: [moving] {
 
 		transport_type_cumulative_usage[mobility_mode] <- transport_type_cumulative_usage[mobility_mode] + 1;
 		speed <- speed_per_mobility[mobility_mode];
-
 	}
 
 	action back_home {
@@ -589,8 +585,8 @@ species people skills: [moving] {
 
 	//Sometimes it happens that people do not get back home independently, this is to reset peoples' location to home again:
 	reflex home when: current_date.hour = rnd(1, 3) and self.current_place != self.living_place and bus_status = 0 {
-			do back_home;
-		}
+		do back_home;
+	}
 
 	//Evaluation of mobility_modes:
 	list<list> mobility_mode_eval {
@@ -666,23 +662,18 @@ species people skills: [moving] {
 
 	//Move according to the selected mobility mode (bus and shared_bike are seperated):
 	reflex move when: (my_current_objective != nil) and (mobility_mode != "bus") and (mobility_mode != "shared_bike") {
-
-	
-		if ((current_edge != nil) and (mobility_mode in ["car"]))
-		{
+		if ((current_edge != nil) and (mobility_mode in ["car"])) {
 			road(current_edge).current_concentration <- max([0, road(current_edge).current_concentration - 1]);
 		}
-		  
+
 		if (mobility_mode in ["car"]) {
-			//do goto target:(road with_min_of (each distance_to (self)));
-			do goto target: my_current_objective.place.location;// on: graph_per_mobility[mobility_mode] move_weights: congestion_map;
+		//do goto target:(road with_min_of (each distance_to (self)));
+			do goto target: my_current_objective.place.location; // on: graph_per_mobility[mobility_mode] move_weights: congestion_map;
 			counter_rides <- counter_rides + 1;
-
 		} else {
-			//do goto target:(road with_min_of (each distance_to (self)));
-			do goto target: my_current_objective.place.location;// on: graph_per_mobility[mobility_mode];
+		//do goto target:(road with_min_of (each distance_to (self)));
+			do goto target: my_current_objective.place.location; // on: graph_per_mobility[mobility_mode];
 			counter_rides <- counter_rides + 1;
-
 		}
 
 		if (self.location = my_current_objective.place.location) {
@@ -693,31 +684,29 @@ species people skills: [moving] {
 			closest_sharing_station <- sharing_station with_min_of (each distance_to (self));
 			if (mobility_mode in ["car", "bike"]) {
 				vehicle_in_use <- mobility_mode;
-
 			}
+
 			add mobility_mode to: latest_modes;
 			mobility_mode <- nil;
 			counter_succeeded <- counter_succeeded + 1;
 		}
 		//TODO: What is happening here?
-		else
-		{
-			if ((current_edge != nil) and (mobility_mode in ["car"]))
-			{
+		else {
+			if ((current_edge != nil) and (mobility_mode in ["car"])) {
 				road(current_edge).current_concentration <- road(current_edge).current_concentration + 1;
 			}
 
 		}
-		
+
 	}
 
 	//Move according to the selected mobility mode bus:
 	reflex move_bus when: (my_current_objective != nil) and (mobility_mode = "bus") {
 	//Person has to go to the bus_stop:
 		if (bus_status = 0) {
-			//do goto target:(road with_min_of (each distance_to (self)));
-			do goto target: closest_bus_stop.location;// on: graph_per_mobility["walking"];
-			counter_rides <- counter_rides + 1;			
+		//do goto target:(road with_min_of (each distance_to (self)));
+			do goto target: closest_bus_stop.location; // on: graph_per_mobility["walking"];
+			counter_rides <- counter_rides + 1;
 			if (location = closest_bus_stop.location) {
 				add self to: closest_bus_stop.waiting_people;
 				bus_status <- 1;
@@ -726,8 +715,8 @@ species people skills: [moving] {
 		}
 		//Person has arrived at the desired bus_stop and walks the last piece to the destination:
 		else if (bus_status = 2) {
-			//do goto target:(road with_min_of (each distance_to (self)));
-			do goto target: my_current_objective.place.location;// on: graph_per_mobility["walking"];
+		//do goto target:(road with_min_of (each distance_to (self)));
+			do goto target: my_current_objective.place.location; // on: graph_per_mobility["walking"];
 			//Person has arrived finally:
 			if (location = my_current_objective.place.location) {
 				current_place <- my_current_objective.place;
@@ -749,8 +738,8 @@ species people skills: [moving] {
 	reflex move_shared_bike when: (my_current_objective != nil) and (mobility_mode = "shared_bike") {
 	//Not yet started riding the shared_bike --> go to closest sharing_station:
 		if (shared_bike_status = 0) {
-			//do goto target:(road with_min_of (each distance_to (self)));
-			do goto target: closest_sharing_station.location;// on: graph_per_mobility["walking"];
+		//do goto target:(road with_min_of (each distance_to (self)));
+			do goto target: closest_sharing_station.location; // on: graph_per_mobility["walking"];
 			//Person has found a bike and takes it to the sharing_station next to the target:
 			if (location = closest_sharing_station.location and length(self.closest_sharing_station.parked_bikes) > 0) {
 				shared_bike_status <- 1;
@@ -758,7 +747,7 @@ species people skills: [moving] {
 				current_shared_bike.in_use <- true;
 				remove closest_sharing_station.parked_bikes[0] from: closest_sharing_station.parked_bikes;
 				//do goto target:(road with_min_of (each distance_to (self)));
-				do goto target: sharing_station with_min_of (each distance_to (my_current_objective));// on: graph_per_mobility["shared_bike"];
+				do goto target: sharing_station with_min_of (each distance_to (my_current_objective)); // on: graph_per_mobility["shared_bike"];
 				counter_rides <- counter_rides + 1;
 			}
 			// If a person arrives at the sharing_station and someone else took the last shared_bike before:
@@ -776,7 +765,7 @@ species people skills: [moving] {
 				current_shared_bike.in_use <- false;
 
 				//do goto target:(road with_min_of (each distance_to (self)));
-				do goto target: my_current_objective.place.location;// on: graph_per_mobility["walking"];
+				do goto target: my_current_objective.place.location; // on: graph_per_mobility["walking"];
 			}
 
 			//Person finally arrived:
@@ -796,7 +785,7 @@ species people skills: [moving] {
 		}
 
 	}
-	
+
 	aspect default {
 		if (mobility_mode = nil) {
 			draw circle(size) at: location + {0, 0, (current_place != nil ? current_place.height : 0.0) + 4} color: color;
@@ -818,9 +807,7 @@ species people skills: [moving] {
 			draw sphere(size) at: {location.x, location.y, cycle * 2} color: color;
 		}
 
-	}
-	
-}
+	} }
 
 species road {
 	list<string> mobility_allowed;
@@ -834,7 +821,7 @@ species road {
 	action update_speed_coeff {
 		speed_coeff <- shape.perimeter / max([0.01, exp(-current_concentration / capacity)]);
 	}
-	
+
 	aspect default {
 		draw shape color: my_color width: 3;
 	}
@@ -918,7 +905,9 @@ experiment "Starte Szenario" type: gui {
 			}
 			*/
 
-			//image background_img;
+/*
+			image background_img;
+			*/
 			species building aspect: default; // refresh: false;
 			species road;
 			species externalCities;

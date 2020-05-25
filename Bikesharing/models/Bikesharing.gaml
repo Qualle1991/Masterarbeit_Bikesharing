@@ -40,9 +40,6 @@ global {
 	//ROAD SPEED LIMIT
 	float max_speed_general <- 50.0;
 
-	//User Interaction in Charts abbilden
-	int gui_action <- 0;
-
 	// MOBILITY DATA
 	list<string> mobility_list <- ["walking", "bike", "car", "bus", "shared_bike"];
 	file activity_file <- file(ProjectFolder + "/profiles_and_modes/ActivityPerProfile.csv");
@@ -845,13 +842,6 @@ species road {
 	aspect mobility {
 		string max_mobility <- mobility_allowed with_max_of (width_per_mobility[each]);
 		draw shape width: width_per_mobility[max_mobility] color: color_per_mobility[max_mobility];
-	}
-
-	reflex update_gui_action_chart {
-		if (timer = 0) {
-			gui_action <- 0;
-		}
-
 	}
 
 }

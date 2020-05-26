@@ -430,7 +430,7 @@ species sharing_station {
 	float height <- 50.0 update: 50.0 + 50.0 * length(parked_bikes);
 	//For bike collection and disposition:
 	list<shared_bike> collector;
-	list<sharing_station> ordered_stations;
+	list<sharing_station> sorted_stations;
 
 	// collect bikes that are too much:
 	action collect_bikes {
@@ -444,16 +444,16 @@ species sharing_station {
 
 		}
 
-		ordered_stations <- sort_by(list(sharing_station), length(each.parked_bikes));
+		sorted_stations <- sort_by(list(sharing_station), length(each.parked_bikes));
 	}
 	//Distribute bikes to the sharing_stations with lessest count of shared_bikes:
 	action distribute_bikes {
 		if (length(collector) > 0) {
 			loop i from: 0 to: length(collector) - 1 {
-				add last(collector) to: first(ordered_stations).parked_bikes;
-				last(first(ordered_stations).parked_bikes).closest_sharing_station <- first(ordered_stations);
+				add last(collector) to: first(sorted_stations).parked_bikes;
+				last(first(sorted_stations).parked_bikes).closest_sharing_station <- first(sorted_stations);
 				remove last(collector) from: collector;
-				ordered_stations <- sort_by(list(sharing_station), length(each.parked_bikes));
+				sorted_stations <- sort_by(list(sharing_station), length(each.parked_bikes));
 			}
 
 		}

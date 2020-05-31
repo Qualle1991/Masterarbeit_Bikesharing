@@ -8,7 +8,7 @@ model Bikesharing
 
 global {
 
-	//ENVIRONMENT
+//ENVIRONMENT
 	float step <- 10 #mn update: 10 #mn;
 	date starting_date <- date([2020, 4, 1, 0, 0]);
 	// case_study needs a folder named like the city in focus
@@ -21,12 +21,14 @@ global {
 	//USER INTERACTION:	
 	//Choice for using Google forms instead of fixed profile_file:
 	string profile_input_mode <- "Feste Profil-Datei" among: ["Feste Profil-Datei", "Google Umfrage"] parameter: "Profil Import" category: "Voreinstellung";
-	string szenario <- "Ausgewogen" parameter: "Szenario: " among: ["Kein Bikesharing", "Wenige Stationen", "Ausgewogen", "Freefloat"] category: "Voreinstellung";
+	string scenario <- "Ausgewogen" parameter: "Szenario: " among: ["Kein Bikesharing", "Wenige Stationen", "Ausgewogen", "Freefloat"] category: "Voreinstellung";
+	bool planned_distribution <- true parameter: "Verteilung Stationen geplant? (sonst Anordnung zufällig) " among: [true, false] category: "Voreinstellung";
 	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 1 max: 10000 category: "Voreinstellung";
 	int nb_pendler <- 25 parameter: "Anzahl der Pendler: " min: 5 max: 1000 category: "Voreinstellung";
 	int nb_shared_bikes <- 200 parameter: "Anzahl der Shared Bikes: " min: 0 max: 1000 category: "Voreinstellung";
 	//Choice for sharing_station-creation-mode:
 	string creation_mode <- "Off" among: ["On", "Off"] parameter: "Klickaktion" category: "Interaktion";
+	string scale_sharing_stations;
 
 	//Shapefiles:
 	string ProjectFolder <- "./../includes/City/" + case_study;
@@ -35,7 +37,7 @@ global {
 	file<geometry> roads_shapefile <- shape_file(ProjectFolder + "/roads.shp");
 	//file<geometry> roads_shapefile <- shape_file(ProjectFolder + "/200219 Luckenwalde highways 1437.shp");
 	file<geometry> bus_shapefile <- shape_file(ProjectFolder + "/bus_stops.shp");
-	file<geometry> bikesharing_shapefile <- shape_file(ProjectFolder + "/sharing_stations.shp");
+
 	//file background_img <- file(GISFolder + "/background.jpg");
 	geometry shape <- envelope(roads_shapefile);
 
@@ -48,8 +50,7 @@ global {
 	file criteria_file <- file(ProjectFolder + "/profiles_and_modes/CriteriaFile.csv");
 	file mode_file <- file(ProjectFolder + "/profiles_and_modes/Modes.csv");
 	file profile_file;
-	
-	
+
 	//MAPS
 	map<string, rgb>
 	color_per_category <- ["Restaurant"::#green, "Night"::#dimgray, "GP"::#dimgray, "Cultural"::#green, "Park"::#green, "Shopping"::#green, "HS"::#darkorange, "Uni"::#pink, "O"::#gray, "R"::#grey];
@@ -79,7 +80,7 @@ global {
 	int count_missed_bike <- 0;
 
 	init {
-				// imports for people data:
+	// imports for people data:
 		do import_profile_file;
 		do profils_data_import;
 		do activity_data_import;
@@ -87,7 +88,8 @@ global {
 		do characteristic_file_import;
 		// mobility_graph:
 		do compute_graph;
-		int nb_sharing_station <- length(bikesharing_shapefile);
+		do evaluate_scenario;
+
 		//gama.pref_display_flat_charts <- true;
 		create road from: roads_shapefile //TODO with: [mobility_allowed::(string(read("mobility_a")) split_with "|")] 
 		{
@@ -95,7 +97,7 @@ global {
 			capacity <- shape.perimeter / 10.0;
 			congestion_map[self] <- 10.0; //shape.perimeter;
 		}
-		
+
 		// Buildings including heigt from building level if in data, else random building level between 1 and 5:
 		create building from: buildings_shapefile with: [usage::string(read("usage")), scale::string(read("scale")), category::string(read("category")), level::int(read("building_l"))] {
 			color <- color_per_category[category];
@@ -112,17 +114,29 @@ global {
 			}
 
 		}
-		
-		if szenario = "Kein Bikesharing"
-		{
-			nb_shared_bikes <-0;
-			nb_sharing_station <-0;
+
+		//Creation of sharing_stations in dependence of scenrario and planned_distribution:
+		int nb_sharing_station;
+		if scenario = "Kein Bikesharing" {
+			nb_shared_bikes <- 0;
+			nb_sharing_station <- 0;
 			remove "shared_bike" from: mobility_list;
+		} else {
+			file<geometry> bikesharing_shapefile <- shape_file(ProjectFolder + "/sharing_stations_" + scale_sharing_stations + ".shp");
+			nb_sharing_station <- length(bikesharing_shapefile);
+			if (planned_distribution = true) {
+				create sharing_station number: nb_sharing_station from: bikesharing_shapefile;
+			} else {
+				create sharing_station number: nb_sharing_station {
+					location <- one_of(road).location;
+				}
+
+			}
+
 		}
-		
+
 		create externalCities from: external_shapefile with: [train::bool(get("train"))];
 		create bus_stop from: bus_shapefile;
-		create sharing_station number:nb_sharing_station from: bikesharing_shapefile;
 
 		// Bus EBW
 		create bus {
@@ -148,8 +162,8 @@ global {
 
 		}
 		*/
-		
-		// shared_bikes are distributed randomly at the sharing_stations:
+
+// shared_bikes are distributed randomly at the sharing_stations:
 		create shared_bike number: nb_shared_bikes {
 			location <- one_of(sharing_station).location;
 			in_use <- false;
@@ -158,15 +172,18 @@ global {
 			add self to: closest_sharing_station.parked_bikes;
 		}
 
-
-
 		// inital number of people created:
 		create people number: nb_people {
 			type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
 			vehicle_in_use <- nil;
 			has_car <- flip(proba_car_per_type[type]);
 			has_bike <- flip(proba_bike_per_type[type]);
-			has_bikesharing <- false;//flip(proba_bikesharing_per_type[type]);
+			if scenario = "Kein Bikesharing" {
+				has_bikesharing <- false;
+			} else {
+				has_bikesharing <- flip(proba_bikesharing_per_type[type]);
+			}
+
 			living_place <- one_of(building where (each.usage = "R" and each.group = self.type));
 			current_place <- living_place;
 			location <- any_location_in(living_place);
@@ -208,7 +225,7 @@ global {
 			}
 
 		}
-//init end:
+		//init end:
 	}
 
 	reflex update_buildings_distribution {
@@ -219,7 +236,16 @@ global {
 
 	}
 
-	// Clicking action: Place the new sharing_station on the street next to users' location
+	action evaluate_scenario {
+		if (scenario = "Wenige Stationen") {
+			scale_sharing_stations <- "low";
+		} else if (scenario = "Ausgewogen") {
+			scale_sharing_stations <- "mid";
+		} else if (scenario = "Freefloat") {
+			scale_sharing_stations <- "high";
+		} }
+
+		// Clicking action: Place the new sharing_station on the street next to users' location
 	action create_sharing_station {
 		if creation_mode = "On" {
 			create sharing_station number: 1 {
@@ -374,7 +400,7 @@ global {
 
 	}
 
-//global end:
+	//global end:
 }
 
 //DEFINITION OF DIFFERENT SPECIES:
@@ -436,7 +462,7 @@ species bus skills: [moving] {
 }
 
 species sharing_station {
-	//sharing_stations have a list of parked_bikes:
+//sharing_stations have a list of parked_bikes:
 	list<shared_bike> parked_bikes;
 	//The height shows how many shared_bikes are parked at the sharing_station:
 	float height <- 50.0 update: 50.0 + 50.0 * length(parked_bikes);
@@ -486,7 +512,7 @@ species sharing_station {
 }
 
 species shared_bike {
-	//locaion of shared_bike is defined by the closest sharing_station:
+//locaion of shared_bike is defined by the closest sharing_station:
 	sharing_station closest_sharing_station;
 	rgb color;
 	float size <- 5 #m;
@@ -702,9 +728,7 @@ species people skills: [moving] {
 			add mobility_mode to: latest_modes;
 			mobility_mode <- nil;
 			counter_succeeded <- counter_succeeded + 1;
-		}
-		//TODO: What is happening here?
-		else {
+		} else { //TODO: What is happening here?
 			if ((current_edge != nil) and (mobility_mode in ["car"])) {
 				road(current_edge).current_concentration <- road(current_edge).current_concentration + 1;
 			}
@@ -725,9 +749,7 @@ species people skills: [moving] {
 				bus_status <- 1;
 			}
 
-		}
-		//Person has arrived at the desired bus_stop and walks the last piece to the destination:
-		else if (bus_status = 2) {
+		} else if (bus_status = 2) { //Person has arrived at the desired bus_stop and walks the last piece to the destination
 		//do goto target:(road with_min_of (each distance_to (self)));
 			do goto target: my_current_objective.place.location; // on: graph_per_mobility["walking"];
 			//Person has arrived finally:

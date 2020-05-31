@@ -21,6 +21,7 @@ global {
 	//USER INTERACTION:	
 	//Choice for using Google forms instead of fixed profile_file:
 	string profile_input_mode <- "Feste Profil-Datei" among: ["Feste Profil-Datei", "Google Umfrage"] parameter: "Profil Import" category: "Voreinstellung";
+	string szenario <- "Ausgewogen" parameter: "Szenario: " among: ["Kein Bikesharing", "Wenige Stationen", "Ausgewogen", "Freefloat"] category: "Voreinstellung";
 	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 1 max: 10000 category: "Voreinstellung";
 	int nb_pendler <- 25 parameter: "Anzahl der Pendler: " min: 5 max: 1000 category: "Voreinstellung";
 	int nb_shared_bikes <- 200 parameter: "Anzahl der Shared Bikes: " min: 0 max: 1000 category: "Voreinstellung";
@@ -47,7 +48,8 @@ global {
 	file criteria_file <- file(ProjectFolder + "/profiles_and_modes/CriteriaFile.csv");
 	file mode_file <- file(ProjectFolder + "/profiles_and_modes/Modes.csv");
 	file profile_file;
-
+	
+	
 	//MAPS
 	map<string, rgb>
 	color_per_category <- ["Restaurant"::#green, "Night"::#dimgray, "GP"::#dimgray, "Cultural"::#green, "Park"::#green, "Shopping"::#green, "HS"::#darkorange, "Uni"::#pink, "O"::#gray, "R"::#grey];
@@ -77,6 +79,15 @@ global {
 	int count_missed_bike <- 0;
 
 	init {
+				// imports for people data:
+		do import_profile_file;
+		do profils_data_import;
+		do activity_data_import;
+		do criteria_file_import;
+		do characteristic_file_import;
+		// mobility_graph:
+		do compute_graph;
+		int nb_sharing_station <- length(bikesharing_shapefile);
 		//gama.pref_display_flat_charts <- true;
 		create road from: roads_shapefile //TODO with: [mobility_allowed::(string(read("mobility_a")) split_with "|")] 
 		{
@@ -84,10 +95,11 @@ global {
 			capacity <- shape.perimeter / 10.0;
 			congestion_map[self] <- 10.0; //shape.perimeter;
 		}
-
+		
 		// Buildings including heigt from building level if in data, else random building level between 1 and 5:
 		create building from: buildings_shapefile with: [usage::string(read("usage")), scale::string(read("scale")), category::string(read("category")), level::int(read("building_l"))] {
 			color <- color_per_category[category];
+			group <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
 			if (level > 0) {
 				height <- 2.6 * level;
 			} else {
@@ -100,10 +112,17 @@ global {
 			}
 
 		}
-
+		
+		if szenario = "Kein Bikesharing"
+		{
+			nb_shared_bikes <-0;
+			nb_sharing_station <-0;
+			remove "shared_bike" from: mobility_list;
+		}
+		
 		create externalCities from: external_shapefile with: [train::bool(get("train"))];
 		create bus_stop from: bus_shapefile;
-		create sharing_station from: bikesharing_shapefile;
+		create sharing_station number:nb_sharing_station from: bikesharing_shapefile;
 
 		// Bus EBW
 		create bus {
@@ -139,14 +158,7 @@ global {
 			add self to: closest_sharing_station.parked_bikes;
 		}
 
-		// imports for people data:
-		do import_profile_file;
-		do profils_data_import;
-		do activity_data_import;
-		do criteria_file_import;
-		do characteristic_file_import;
-		// mobility_graph:
-		do compute_graph;
+
 
 		// inital number of people created:
 		create people number: nb_people {
@@ -154,8 +166,8 @@ global {
 			vehicle_in_use <- nil;
 			has_car <- flip(proba_car_per_type[type]);
 			has_bike <- flip(proba_bike_per_type[type]);
-			has_bikesharing <- flip(proba_bikesharing_per_type[type]);
-			living_place <- one_of(building where (each.usage = "R"));
+			has_bikesharing <- false;//flip(proba_bikesharing_per_type[type]);
+			living_place <- one_of(building where (each.usage = "R" and each.group = self.type));
 			current_place <- living_place;
 			location <- any_location_in(living_place);
 			color <- color_per_type[type];
@@ -431,6 +443,7 @@ species sharing_station {
 	//For bike collection and disposition:
 	list<shared_bike> collector;
 	list<sharing_station> sorted_stations;
+	//TODO: Zähler für Nutzung
 
 	// collect bikes that are too much:
 	action collect_bikes {
@@ -504,7 +517,7 @@ species people skills: [moving] {
 	int bus_status <- 0;
 	int shared_bike_status <- 0;
 	shared_bike current_shared_bike <- nil;
-	list latest_modes;
+	list<string> latest_modes;
 
 	action create_activites {
 		map<string, int> activities <- activity_data[type];
@@ -835,6 +848,7 @@ species road {
 
 species building {
 	string usage;
+	string group;
 	string scale;
 	string category;
 	rgb color <- #grey;

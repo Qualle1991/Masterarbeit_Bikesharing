@@ -1,7 +1,7 @@
 /*
 * Name: Bikesharing
 * Author: Pascal Schwerk
-* Description: Game on Luckenwalde with bikesharing, based on Game It by Tallaindier et al. and Eberswalde by //TODO
+* Description: Game on Luckenwalde with bikesharing, based on Game It by Tallaindier et al. and Eberswalde by //TODO: Quellenangabe
 * Tags: bikesharing, newmobility
 */
 model Bikesharing
@@ -91,7 +91,7 @@ global {
 		do evaluate_scenario;
 
 		//gama.pref_display_flat_charts <- true;
-		create road from: roads_shapefile //TODO with: [mobility_allowed::(string(read("mobility_a")) split_with "|")] 
+		create road from: roads_shapefile //with: [mobility_allowed::(string(read("mobility_a")) split_with "|")] TODO: Funktioniert an sich, wird aber erst eingebaut, wenn Straßen funktionieren
 		{
 			mobility_allowed <- ["walking", "bike", "car", "bus", "shared_bike"];
 			capacity <- shape.perimeter / 10.0;
@@ -196,7 +196,7 @@ global {
 		//nb_pendler
 		ask externalCities {
 			create people number: nb_pendler {
-			//TODO (Ein)pendler sollten nur Arbeitnehmer sein
+			//TODO: (Ein)pendler sollten nur Arbeitnehmer sein
 				type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
 				if myself.train = true {
 					has_bike <- flip(proba_bike_per_type[type]);
@@ -896,7 +896,7 @@ species externalCities parent: building {
 
 }
 
-experiment "Starte Szenario" type: gui {
+experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 	output {
 	//monitor test value: current_date.hour refresh: every(1#minute);
 		display map type: opengl refresh: every(1 #cycle) draw_env: false background: #black //refresh: every(#hour)

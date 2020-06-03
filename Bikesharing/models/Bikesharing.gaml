@@ -79,6 +79,7 @@ global {
 	int counter_succeeded <- 0;
 	int count_missed_bike <- 0;
 	int day_counter;
+	list day_x_label <- [0];
 
 	init {
 	// imports for people data:
@@ -389,6 +390,7 @@ global {
 		if (current_date.hour = 6 and current_date.minute = 0) {
 			transport_type_cumulative_usage <- ["walking"::0, "bike"::0, "car"::0, "bus"::0, "shared_bike"::0];
 			day_counter <- day_counter + 1;
+			add day_counter to: day_x_label;
 		}
 
 	}
@@ -1052,7 +1054,7 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 		}
 
 		display chart_2 type: java2D background: #black refresh: every(#day) {
-			chart "Fahrten tageweise" type: series background: #black color: #white title_font: "Arial" {
+			chart "Fahrten tageweise" type: series x_serie_labels: day_x_label background: #black color: #white title_font: "Arial" {
 				loop i from: 0 to: length(transport_type_cumulative_usage_per_day.keys) - 1 {
 					data transport_type_cumulative_usage_per_day.keys[i] value: transport_type_cumulative_usage_per_day.values[i] color:
 					color_per_mobility[transport_type_cumulative_usage_per_day.keys[i]];

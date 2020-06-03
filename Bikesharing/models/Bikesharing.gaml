@@ -701,10 +701,11 @@ species people skills: [moving] {
 
 	//Move according to the selected mobility mode (bus and shared_bike are seperated):
 	reflex move when: (my_current_objective != nil) and (mobility_mode != "bus") and (mobility_mode != "shared_bike") {
+	/*
 		if ((current_edge != nil) and (mobility_mode in ["car"])) {
 			road(current_edge).current_concentration <- max([0, road(current_edge).current_concentration - 1]);
 		}
-
+ */
 		if (mobility_mode in ["car"]) {
 		//do goto target:(road with_min_of (each distance_to (self)));
 			do goto target: my_current_objective.place.location; // on: graph_per_mobility[mobility_mode] move_weights: congestion_map;
@@ -728,13 +729,17 @@ species people skills: [moving] {
 			add mobility_mode to: latest_modes;
 			mobility_mode <- nil;
 			counter_succeeded <- counter_succeeded + 1;
-		} else { //TODO: What is happening here?
+		}
+		/*
+		  
+		  else { //TODO: What is happening here?
 			if ((current_edge != nil) and (mobility_mode in ["car"])) {
 				road(current_edge).current_concentration <- road(current_edge).current_concentration + 1;
 			}
 
 		}
-
+		
+		*/
 	}
 
 	//Move according to the selected mobility mode bus:
@@ -957,6 +962,13 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 				{world.shape.width * 0, world.shape.height * 0.99};
 			}
 
+			chart "People Distribution" type: pie style: ring size: {0.5, 0.5} position: {1, 0} background: #transparent color: #black title_font: "Arial" tick_font_size: 12 {
+				loop i from: 0 to: length(proportion_per_type.keys) - 1 {
+					data proportion_per_type.keys[i] value: proportion_per_type.values[i] color: color_per_type[proportion_per_type.keys[i]];
+				}
+
+			}
+
 			//   		 overlay position: { 5, 5 } size: { 240 # px, 680 # px } background: # black transparency: 1.0 border: # black
 			//   		 {
 			//   			 rgb text_color <- # white;
@@ -995,24 +1007,15 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 
 		}
 
-		display chart type: java2D background: #black draw_env: false refresh: every(#minute) {
-			chart "Fahrten tageweise" type: pie style: ring size: {0.5, 0.5} background: #transparent color: #black title_font: "Arial" {
+		display chart type: java2D background: #black draw_env: false refresh: every(10 #cycle) {
+			chart "Fahrten tageweise" type: pie style: ring position: {0, 0} size: {0.5, 0.5} background: #transparent color: #white title_font: "Arial" {
 				loop i from: 0 to: length(transport_type_cumulative_usage.keys) - 1 {
 					data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color: color_per_mobility[transport_type_cumulative_usage.keys[i]];
 				}
 
 			}
 
-			//   		 chart "People Distribution" type: pie style: ring size: { 0.5, 0.8 } position: { 0, -world.shape.height * 1.1 } background: # transparent color: # black title_font: "Arial"
-			//   		 tick_font_size: 0
-			//   		 {
-			//   			 loop i from: 0 to: length(proportion_per_type.keys) - 1
-			//   			 {
-			//   				 data proportion_per_type.keys[i] value: proportion_per_type.values[i] color: color_per_type[proportion_per_type.keys[i]];
-			//   			 }
-			//
-			//   		 }
-			chart "Fahrten stundenweise" type: series size: {0.5, 0.5} background: #transparent color: #white title_font: "Arial" {
+			chart "Fahrten stundenweise" type: series position: {0, 0.5} size: {0.5, 0.5} background: #transparent color: #white title_font: "Arial" {
 				loop i from: 0 to: length(transport_type_cumulative_usage.keys) - 1 {
 					data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color: color_per_mobility[transport_type_cumulative_usage.keys[i]];
 				}
@@ -1032,7 +1035,7 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 		}
 
 		display chart_2 type: java2D background: #black refresh: every(#day) {
-			chart "Fahrten tageweise" type: series size: {0.5, 0.5} background: #transparent color: #white title_font: "Arial" {
+			chart "Fahrten tageweise" type: series background: #black color: #white title_font: "Arial" {
 				loop i from: 0 to: length(transport_type_cumulative_usage_per_day.keys) - 1 {
 					data transport_type_cumulative_usage_per_day.keys[i] value: transport_type_cumulative_usage_per_day.values[i] color:
 					color_per_mobility[transport_type_cumulative_usage_per_day.keys[i]];

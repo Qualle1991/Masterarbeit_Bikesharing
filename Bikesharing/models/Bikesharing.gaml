@@ -1062,6 +1062,30 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 
 		}
 
+		display Erfolgsbarometer refresh: every(#day) {
+			chart "Erfolgsbarometer" type: xy x_range: [0, 9] y_range: [0, 70] {
+				int y;
+				//int days;
+				loop i from: 0 to: length(shared_bike) - 1 {
+					y <- y + shared_bike[i].usage_counter;
+				}
+
+				data 'Bikeusage RAL' value: {round(y / length(shared_bike) / (day_counter + 0.0001)), round(y / length(people) * 1000 / (day_counter + 0.0001))} color: #black;
+				//int usage_per_bike_per_day <- round(y/length(shared_bike)/(day_counter+0.0001));
+				//int trips_per_thousand <- round(y/length(people)*1000/(day_counter+0.0001));  
+				data 'Bikeusage' value: {5, 20} color: #black;
+				/*
+				if day_counter=0 {
+					days <-1;
+				}
+				else{
+					days <-day_counter;
+				}
+				*/
+			}
+
+		}
+
 	}
 
 }

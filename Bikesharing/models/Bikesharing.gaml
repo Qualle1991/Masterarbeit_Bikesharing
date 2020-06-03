@@ -518,6 +518,7 @@ species shared_bike {
 	float size <- 5 #m;
 	bool in_use;
 
+
 	aspect default {
 		draw circle(size) color: color;
 	}
@@ -962,7 +963,7 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 				{world.shape.width * 0, world.shape.height * 0.99};
 			}
 
-			chart "People Distribution" type: pie style: ring size: {0.5, 0.5} position: {1, 0} background: #transparent color: #black title_font: "Arial" tick_font_size: 12 {
+			chart "People Distribution" type: pie style: ring size: {0.5, 0.5} position: {1, 0} background: #black color: #black title_font: "Arial" tick_font_size: 12 {
 				loop i from: 0 to: length(proportion_per_type.keys) - 1 {
 					data proportion_per_type.keys[i] value: proportion_per_type.values[i] color: color_per_type[proportion_per_type.keys[i]];
 				}
@@ -1008,14 +1009,14 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 		}
 
 		display chart type: java2D background: #black draw_env: false refresh: every(10 #cycle) {
-			chart "Fahrten tageweise" type: pie style: ring position: {0, 0} size: {0.5, 0.5} background: #transparent color: #white title_font: "Arial" {
+			chart "Fahrten tageweise" type: pie style: ring position: {0, 0} size: {0.5, 0.5} background: #black color: #white title_font: "Arial" {
 				loop i from: 0 to: length(transport_type_cumulative_usage.keys) - 1 {
 					data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color: color_per_mobility[transport_type_cumulative_usage.keys[i]];
 				}
 
 			}
 
-			chart "Fahrten stundenweise" type: series position: {0, 0.5} size: {0.5, 0.5} background: #transparent color: #white title_font: "Arial" {
+			chart "Fahrten stundenweise" type: series position: {0, 0.5} size: {0.5, 0.5} background: #black color: #white title_font: "Arial" {
 				loop i from: 0 to: length(transport_type_cumulative_usage.keys) - 1 {
 					data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color: color_per_mobility[transport_type_cumulative_usage.keys[i]];
 				}

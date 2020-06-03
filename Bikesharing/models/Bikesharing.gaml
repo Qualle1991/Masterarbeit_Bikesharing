@@ -78,6 +78,7 @@ global {
 	int counter_rides <- 0;
 	int counter_succeeded <- 0;
 	int count_missed_bike <- 0;
+	int day_counter;
 
 	init {
 	// imports for people data:
@@ -387,6 +388,7 @@ global {
 	reflex reset_cumulative_trips {
 		if (current_date.hour = 6 and current_date.minute = 0) {
 			transport_type_cumulative_usage <- ["walking"::0, "bike"::0, "car"::0, "bus"::0, "shared_bike"::0];
+			day_counter <- day_counter + 1;
 		}
 
 	}
@@ -517,7 +519,7 @@ species shared_bike {
 	rgb color;
 	float size <- 5 #m;
 	bool in_use;
-
+	int usage_counter;
 
 	aspect default {
 		draw circle(size) color: color;
@@ -786,6 +788,7 @@ species people skills: [moving] {
 				shared_bike_status <- 1;
 				current_shared_bike <- closest_sharing_station.parked_bikes[0];
 				current_shared_bike.in_use <- true;
+				current_shared_bike.usage_counter <- current_shared_bike.usage_counter + 1;
 				remove closest_sharing_station.parked_bikes[0] from: closest_sharing_station.parked_bikes;
 				//do goto target:(road with_min_of (each distance_to (self)));
 				do goto target: sharing_station with_min_of (each distance_to (my_current_objective)); // on: graph_per_mobility["shared_bike"];
@@ -958,9 +961,22 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 			species shared_bike;
 			species bus aspect: default;
 			species people aspect: default;
+			/*
 			graphics "time" {
 				draw string("Uhrzeit: " + current_date.hour) + ":" + string(current_date.minute) color: #darkgrey font: font("Arial", 30, #italic) at:
 				{world.shape.width * 0, world.shape.height * 0.99};
+			}
+			*/
+			graphics "Bike usage" {
+				int y;
+				loop i from: 0 to: length(shared_bike) - 1 {
+					y <- y + shared_bike[i].usage_counter;
+				}
+
+				int usage_per_bike_per_day <- round(y / length(shared_bike) / day_counter);
+				int trips_per_thousand <- round(y / length(people) * 1000 / day_counter);
+				draw string("Use per Bike per Day: " + usage_per_bike_per_day) color: (usage_per_bike_per_day < 4) ? #red : #green;
+				draw string("Average usage per 1000 People: " + trips_per_thousand) at: {world.shape.width * 0, world.shape.height * 0.99} color: (trips_per_thousand < 30) ? #red : #green;
 			}
 
 			chart "People Distribution" type: pie style: ring size: {0.5, 0.5} position: {1, 0} background: #black color: #black title_font: "Arial" tick_font_size: 12 {

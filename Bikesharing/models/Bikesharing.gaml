@@ -25,7 +25,7 @@ global {
 	bool planned_distribution <- true parameter: "Verteilung Stationen geplant? (sonst Anordnung zufällig) " among: [true, false] category: "Voreinstellung";
 	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 1 max: 10000 category: "Voreinstellung";
 	int nb_pendler <- 25 parameter: "Anzahl der Pendler: " min: 5 max: 1000 category: "Voreinstellung";
-	int nb_shared_bikes <- 200 parameter: "Anzahl der Shared Bikes: " min: 0 max: 1000 category: "Voreinstellung";
+	int nb_shared_bikes <- 10 parameter: "Anzahl der Shared Bikes (pro 1000): " min: 0 max: 100 category: "Voreinstellung";
 	//Choice for sharing_station-creation-mode:
 	string creation_mode <- "Off" among: ["On", "Off"] parameter: "Klickaktion" category: "Interaktion";
 	string scale_sharing_stations;
@@ -164,7 +164,7 @@ global {
 		*/
 
 // shared_bikes are distributed randomly at the sharing_stations:
-		create shared_bike number: nb_shared_bikes {
+		create shared_bike number: round(nb_shared_bikes / 1000 * (nb_people + nb_pendler)) {
 			location <- one_of(sharing_station).location;
 			in_use <- false;
 			closest_sharing_station <- sharing_station with_min_of (each distance_to (self));

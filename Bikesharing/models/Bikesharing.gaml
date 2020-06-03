@@ -963,12 +963,12 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 			species shared_bike;
 			species bus aspect: default;
 			species people aspect: default;
-			/*
+			
 			graphics "time" {
 				draw string("Uhrzeit: " + current_date.hour) + ":" + string(current_date.minute) color: #darkgrey font: font("Arial", 30, #italic) at:
 				{world.shape.width * 0, world.shape.height * 0.99};
 			}
-			*/
+			
 			graphics "Bike usage" {
 				int y;
 				loop i from: 0 to: length(shared_bike) - 1 {
@@ -977,8 +977,9 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 
 				int usage_per_bike_per_day <- round(y / length(shared_bike) / day_counter);
 				int trips_per_thousand <- round(y / length(people) * 1000 / day_counter);
-				draw string("Use per Bike per Day: " + usage_per_bike_per_day) color: (usage_per_bike_per_day < 4) ? #red : #green;
-				draw string("Average usage per 1000 People: " + trips_per_thousand) at: {world.shape.width * 0, world.shape.height * 0.99} color: (trips_per_thousand < 30) ? #red : #green;
+				draw string("Use per Bike per Day: " + usage_per_bike_per_day) at: {world.shape.width * 1, world.shape.height * 0.6} color: (usage_per_bike_per_day < 4) ? #red : #green;
+				draw string("Average usage per 1000 People: " + trips_per_thousand) at: {world.shape.width * 1, world.shape.height * 0.65} color: (trips_per_thousand < 30) ? #red : #green;
+				draw string("Days: " + day_counter) at: {world.shape.width * 1, world.shape.height * 0.7} color: #white;
 			}
 
 			chart "People Distribution" type: pie style: ring size: {0.5, 0.5} position: {1, 0} background: #black color: #black title_font: "Arial" tick_font_size: 12 {

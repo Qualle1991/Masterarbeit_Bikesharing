@@ -980,6 +980,8 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 				draw string("Use per Bike per Day: " + usage_per_bike_per_day) at: {world.shape.width * 1, world.shape.height * 0.6} color: (usage_per_bike_per_day < 4) ? #red : #green;
 				draw string("Average usage per 1000 People: " + trips_per_thousand) at: {world.shape.width * 1, world.shape.height * 0.65} color: (trips_per_thousand < 30) ? #red : #green;
 				draw string("Days: " + day_counter) at: {world.shape.width * 1, world.shape.height * 0.7} color: #white;
+				draw string("Fahrten angetreten: " + counter_rides) at: {world.shape.width * 1, world.shape.height * 0.75} color: #white;
+				draw string("Fahrten beendet: " + counter_succeeded) at: {world.shape.width * 1, world.shape.height * 0.8} color: #white;
 			}
 
 			chart "People Distribution" type: pie style: ring size: {0.5, 0.5} position: {1, 0} background: #black color: #black title_font: "Arial" tick_font_size: 12 {

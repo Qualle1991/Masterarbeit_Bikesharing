@@ -21,7 +21,7 @@ global {
 	//USER INTERACTION:	
 	//Choice for using Google forms instead of fixed profile_file:
 	string profile_input_mode <- "Feste Profil-Datei" among: ["Feste Profil-Datei", "Google Umfrage"] parameter: "Profil Import" category: "Voreinstellung";
-	string scenario <- "Ausgewogen" parameter: "Szenario: " among: ["Kein Bikesharing", "Wenige Stationen", "Ausgewogen", "Freefloat"] category: "Voreinstellung";
+	string scenario <- "Ausgewogen" parameter: "Szenario: " among: ["Kein Bikesharing", "Ausgewogen", "Freefloat"] category: "Voreinstellung";
 	bool planned_distribution <- true parameter: "Verteilung Stationen geplant? (sonst Anordnung zufällig) " among: [true, false] category: "Voreinstellung";
 	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 1 max: 10000 category: "Voreinstellung";
 	int nb_pendler <- 25 parameter: "Anzahl der Pendler: " min: 5 max: 1000 category: "Voreinstellung";
@@ -39,6 +39,7 @@ global {
 	file<geometry> bus_shapefile <- shape_file(ProjectFolder + "/bus_stops.shp");
 
 	//file background_img <- file(GISFolder + "/background.jpg");
+	file performance_chart <- file("./../includes/images/performance_chart.png");
 	geometry shape <- envelope(roads_shapefile);
 
 	//ROAD SPEED LIMIT
@@ -81,6 +82,8 @@ global {
 	int count_missed_bike <- 0;
 	int day_counter;
 	list day_x_label <- [0];
+	int usage_per_bike_per_day;
+	int trips_per_thousand;
 
 	init {
 	// imports for people data:
@@ -243,9 +246,7 @@ global {
 	}
 
 	action evaluate_scenario {
-		if (scenario = "Wenige Stationen") {
-			scale_sharing_stations <- "low";
-		} else if (scenario = "Ausgewogen") {
+		if (scenario = "Ausgewogen") {
 			scale_sharing_stations <- "mid";
 		} else if (scenario = "Freefloat") {
 			scale_sharing_stations <- "high";
@@ -407,6 +408,16 @@ global {
 		}
 
 	}
+	
+	reflex calculate_sharing_usage {
+		int y;
+		loop i from: 0 to: length(shared_bike) - 1 {
+			y <- y + shared_bike[i].usage_counter;
+			}
+			if(day_counter>0){
+			usage_per_bike_per_day <- round(y / length(shared_bike) / day_counter);
+			trips_per_thousand <- round(y / length(people) * 1000 / day_counter);
+			}
 
 	//global end:
 }
@@ -443,8 +454,8 @@ species bus skills: [moving] {
 	// Bus ride routine:
 	reflex ride {
 		//do goto target: my_target.location on: graph_per_mobility["car"] speed: speed_per_mobility["bus"];
-		//do goto target: my_target.location speed: speed_per_mobility["bus"];
-		do goto target: my_target.location on: graph_per_mobility_2 speed: speed_per_mobility["bus"];
+		do goto target: my_target.location speed: speed_per_mobility["bus"];
+		//do goto target: my_target.location on: graph_per_mobility_2 speed: speed_per_mobility["bus"];
 		if (location = my_target.location) {
 		//release people according to stop_passengers list:
 			ask stop_passengers[my_target] {
@@ -721,14 +732,14 @@ species people skills: [moving] {
 		if (mobility_mode in ["car"]) {
 		//do goto target:(road with_min_of (each distance_to (self)));
 			//do goto target: my_current_objective.place.location on: graph_per_mobility[mobility_mode] move_weights: congestion_map;
-			//do goto target: my_current_objective.place.location move_weights: congestion_map;
-			do goto target: my_current_objective.place.location on: graph_per_mobility_2 move_weights: congestion_map;
+			do goto target: my_current_objective.place.location move_weights: congestion_map;
+			//do goto target: my_current_objective.place.location on: graph_per_mobility_2 move_weights: congestion_map;
 			counter_rides <- counter_rides + 1;
 		} else {
 		//do goto target:(road with_min_of (each distance_to (self)));
 			//do goto target: my_current_objective.place.location on: graph_per_mobility[mobility_mode];
-			//do goto target: my_current_objective.place.location;
-			do goto target: my_current_objective.place.location on: graph_per_mobility_2;
+			do goto target: my_current_objective.place.location;
+			//do goto target: my_current_objective.place.location on: graph_per_mobility_2;
 			counter_rides <- counter_rides + 1;
 		}
 
@@ -764,8 +775,8 @@ species people skills: [moving] {
 		if (bus_status = 0) {
 		//do goto target:(road with_min_of (each distance_to (self)));
 			//do goto target: closest_bus_stop.location on: graph_per_mobility["walking"];
-			//do goto target: closest_bus_stop.location;
-			do goto target: closest_bus_stop.location on: graph_per_mobility_2;
+			do goto target: closest_bus_stop.location;
+			//do goto target: closest_bus_stop.location on: graph_per_mobility_2;
 			counter_rides <- counter_rides + 1;
 			if (location = closest_bus_stop.location) {
 				add self to: closest_bus_stop.waiting_people;
@@ -775,8 +786,8 @@ species people skills: [moving] {
 		} else if (bus_status = 2) { //Person has arrived at the desired bus_stop and walks the last piece to the destination
 		//do goto target:(road with_min_of (each distance_to (self)));
 			//do goto target: my_current_objective.place.location on: graph_per_mobility["walking"];
-			//do goto target: my_current_objective.place.location;
-			do goto target: my_current_objective.place.location on: graph_per_mobility_2;
+			do goto target: my_current_objective.place.location;
+			//do goto target: my_current_objective.place.location on: graph_per_mobility_2;
 			//Person has arrived finally:
 			if (location = my_current_objective.place.location) {
 				current_place <- my_current_objective.place;
@@ -800,8 +811,8 @@ species people skills: [moving] {
 		if (shared_bike_status = 0) {
 		//do goto target:(road with_min_of (each distance_to (self)));
 			//do goto target: closest_sharing_station.location on: graph_per_mobility["walking"];
-			//do goto target: closest_sharing_station.location;
-			do goto target: closest_sharing_station.location on: graph_per_mobility_2;
+			do goto target: closest_sharing_station.location;
+			//do goto target: closest_sharing_station.location on: graph_per_mobility_2;
 			//Person has found a bike and takes it to the sharing_station next to the target:
 			if (location = closest_sharing_station.location and length(self.closest_sharing_station.parked_bikes) > 0) {
 				shared_bike_status <- 1;
@@ -811,8 +822,8 @@ species people skills: [moving] {
 				remove closest_sharing_station.parked_bikes[0] from: closest_sharing_station.parked_bikes;
 				//do goto target:(road with_min_of (each distance_to (self)));
 				//do goto target: sharing_station with_min_of (each distance_to (my_current_objective)) on: graph_per_mobility["shared_bike"];
-				//do goto target: sharing_station with_min_of (each distance_to (my_current_objective));
-				do goto target: sharing_station with_min_of (each distance_to (my_current_objective)) on: graph_per_mobility_2;
+				do goto target: sharing_station with_min_of (each distance_to (my_current_objective));
+				//do goto target: sharing_station with_min_of (each distance_to (my_current_objective)) on: graph_per_mobility_2;
 				counter_rides <- counter_rides + 1;
 			}
 			// If a person arrives at the sharing_station and someone else took the last shared_bike before:
@@ -831,8 +842,8 @@ species people skills: [moving] {
 
 				//do goto target:(road with_min_of (each distance_to (self)));
 				//do goto target: my_current_objective.place.location on: graph_per_mobility["walking"];
-				//do goto target: my_current_objective.place.location;
-				do goto target: my_current_objective.place.location on: graph_per_mobility_2;
+				do goto target: my_current_objective.place.location;
+				//do goto target: my_current_objective.place.location on: graph_per_mobility_2;
 			}
 
 			//Person finally arrived:
@@ -928,6 +939,8 @@ species externalCities parent: building {
 
 }
 
+}
+
 experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 	output {
 	//monitor test value: current_date.hour refresh: every(1#minute);
@@ -991,13 +1004,6 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 			}
 			
 			graphics "Bike usage" {
-				int y;
-				loop i from: 0 to: length(shared_bike) - 1 {
-					y <- y + shared_bike[i].usage_counter;
-				}
-
-				int usage_per_bike_per_day <- round(y / length(shared_bike) / day_counter);
-				int trips_per_thousand <- round(y / length(people) * 1000 / day_counter);
 				draw string("Use per Bike per Day: " + usage_per_bike_per_day) at: {world.shape.width * 1, world.shape.height * 0.6} color: (usage_per_bike_per_day < 4) ? #red : #green;
 				draw string("Average usage per 1000 People: " + trips_per_thousand) at: {world.shape.width * 1, world.shape.height * 0.65} color: (trips_per_thousand < 30) ? #red : #green;
 				draw string("Days: " + day_counter) at: {world.shape.width * 1, world.shape.height * 0.7} color: #white;
@@ -1089,27 +1095,15 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 		}
 
 		display Erfolgsbarometer refresh: every(#day) {
-			chart "Erfolgsbarometer" type: xy x_range: [0, 9] y_range: [0, 70] {
-				int y;
-				//int days;
-				loop i from: 0 to: length(shared_bike) - 1 {
-					y <- y + shared_bike[i].usage_counter;
-				}
-
-				data 'Bikeusage RAL' value: {round(y / length(shared_bike) / (day_counter + 0.0001)), round(y / length(people) * 1000 / (day_counter + 0.0001))} color: #black;
-				//int usage_per_bike_per_day <- round(y/length(shared_bike)/(day_counter+0.0001));
-				//int trips_per_thousand <- round(y/length(people)*1000/(day_counter+0.0001));  
-				data 'Bikeusage' value: {5, 20} color: #black;
-				/*
-				if day_counter=0 {
-					days <-1;
-				}
-				else{
-					days <-day_counter;
-				}
-				*/
+			//image performance_chart;
+			chart "Erfolgsbarometer" type: xy x_range: [0, 9] y_range: [0, 70] style:dot{
+				data 'Bikeusage' value: {usage_per_bike_per_day, trips_per_thousand} color: #red;
+	
+				
+			
 			}
 
+			
 		}
 
 	}

@@ -39,7 +39,7 @@ global {
 	file<geometry> bus_shapefile <- shape_file(ProjectFolder + "/bus_stops.shp");
 
 	//file background_img <- file(GISFolder + "/background.jpg");
-	file performance_chart <- file("./../includes/images/performance_chart.png");
+	file performance_chart <- file("./../includes/images/performance_chart_bg.png");
 	geometry shape <- envelope(roads_shapefile);
 
 	//ROAD SPEED LIMIT
@@ -1110,12 +1110,11 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 
 		}
 
-		display Erfolgsbarometer refresh: every(#day) {
-			//image performance_chart;
-			chart "Erfolgsbarometer" type: xy x_range: [0, 9] y_range: [0, 70] style:dot{
-				data 'Bikeusage' value: {usage_per_bike_per_day, trips_per_thousand} color: #red;
+		display Performance background:#white refresh: every(#day) {
+			chart "Bike Share System Performance" tick_font: "Arial" legend_font: "Arial" label_font: "Arial" title_font: "Arial" color:#black background:#white type: xy x_tick_unit:1.0 y_tick_unit:10.0 x_range: [0, 9] y_range: [0, 70] style:dot x_label:"Trips per bike (Infrastructure usage)" y_label:"Trips per 1000 people (Market Penetration)"{
+				data 'Bikeusage' value: {usage_per_bike_per_day, trips_per_thousand} color: #black;
 			}
-			
+			image performance_chart transparency:0.5;
 		}
 
 	}

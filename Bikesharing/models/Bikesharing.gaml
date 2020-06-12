@@ -106,9 +106,9 @@ global {
 		//do compute_graph;
 		graph_per_mobility_2 <- as_edge_graph(road);
 		write graph_per_mobility_2;
-	
+
 		// Buildings including heigt from building level if in data, else random building level between 1 and 5:
-		create building from: buildings_shapefile with: [usage::string(read("usage")), scale::string(read("scale")), category::string(read("category")), level::int(read("building_l")), proba_under18::float(read("unter18_A"))/100, proba_18to65::float(read("18bis65_A"))/100, proba_over65::float(read("ab65_A"))/100, proba_density::float(read("density"))] {
+		create building from: buildings_shapefile with: [usage::string(read("usage")), scale::string(read("scale")), category::string(read("category")), level::int(read("building_l"))] {
 			color <- color_per_category[category];
 			group <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
 			if (level > 0) {
@@ -192,8 +192,8 @@ global {
 			} else {
 				has_bikesharing <- flip(proba_bikesharing_per_type[type]);
 			}
-			//living_place <- one_of(building where (each.usage = "R" and each.group = self.type));
-			do choose_living_place;
+
+			living_place <- one_of(building where (each.usage = "R" and each.group = self.type));
 			current_place <- living_place;
 			location <- any_location_in(living_place);
 			color <- color_per_type[type];
@@ -201,7 +201,7 @@ global {
 			closest_sharing_station <- sharing_station with_min_of (each distance_to (self));
 			do create_activites;
 		}
-		
+
 		//nb_pendler
 		ask externalCities {
 			create people number: nb_pendler {
@@ -596,18 +596,6 @@ species people skills: [moving] {
 
 	}
 
-	action choose_living_place {
-		list<building> possible_living_bds;
-		if (type = "Rentner") {
-			possible_living_bds <- building where ((each.usage = "R") and (flip(each.proba_over65)) and (flip(each.proba_density)));
-		} else if (type = "Schueler") {
-			possible_living_bds <- building where ((each.usage = "R") and (flip(each.proba_under18)) and (flip(each.proba_density)));
-		} else {
-			possible_living_bds <- building where ((each.usage = "R") and (flip(each.proba_18to65)) and (flip(each.proba_density)));
-		}
-		living_place <- one_of(possible_living_bds);
-	}
-
 	action create_trip_objectives (string act_name, building act_place, int act_time) {
 		create trip_objective {
 			name <- act_name;
@@ -928,10 +916,6 @@ species building {
 	string group;
 	string scale;
 	string category;
-	float proba_under18;
-	float proba_18to65;
-	float proba_over65;
-	float proba_density;
 	rgb color <- #grey;
 	int level;
 	float height;
@@ -1114,7 +1098,11 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 			//image performance_chart;
 			chart "Erfolgsbarometer" type: xy x_range: [0, 9] y_range: [0, 70] style:dot{
 				data 'Bikeusage' value: {usage_per_bike_per_day, trips_per_thousand} color: #red;
+	
+				
+			
 			}
+
 			
 		}
 

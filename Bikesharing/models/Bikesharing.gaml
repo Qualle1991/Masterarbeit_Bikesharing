@@ -24,7 +24,7 @@ global {
 	string scenario <- "Ausgewogen" parameter: "Szenario: " among: ["Kein Bikesharing", "Ausgewogen", "Freefloat"] category: "Voreinstellung";
 	bool planned_distribution <- true parameter: "Verteilung Stationen geplant? (sonst Anordnung zufällig) " among: [true, false] category: "Voreinstellung";
 	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 1 max: 10000 category: "Voreinstellung";
-	int nb_pendler <- 25 parameter: "Anzahl der Pendler: " min: 5 max: 1000 category: "Voreinstellung";
+	int nb_pendler <- 25 parameter: "Anteil der Einpendler an Gesamtbevölkerung (in%): " min: 0 max: 100 category: "Voreinstellung";
 	int nb_shared_bikes <- 10 parameter: "Anzahl der Shared Bikes (pro 1000): " min: 0 max: 100 category: "Voreinstellung";
 	//Choice for sharing_station-creation-mode:
 	string creation_mode <- "Off" among: ["On", "Off"] parameter: "Klickaktion" category: "Interaktion";
@@ -56,7 +56,7 @@ global {
 	map<string, rgb>
 	color_per_category <- ["Restaurant"::#green, "Night"::#dimgray, "GP"::#dimgray, "Cultural"::#green, "Park"::#green, "Shopping"::#green, "HS"::#darkorange, "Uni"::#pink, "O"::#gray, "R"::#grey];
 	map<string, rgb>
-	color_per_type <- ["Studierende"::#purple, "Schueler"::#gamablue, "Arbeitnehmer"::#cornflowerblue, "Fuehrungskraefte"::#lightgrey, "Heimzentrierte"::#yellow, "Rentner"::#mediumturquoise];
+	color_per_type <- ["Auspendler"::#purple, "Schueler"::#gamablue, "Arbeitnehmer"::#cornflowerblue, "Fuehrungskraefte"::#lightgrey, "Heimzentrierte"::#yellow, "Rentner"::#mediumturquoise];
 	map<string, map<string, int>> activity_data;
 	map<string, float> proportion_per_type;
 	map<string, float> proba_bike_per_type;
@@ -105,7 +105,6 @@ global {
 		// mobility_graph:
 		//do compute_graph;
 		graph_per_mobility_2 <- as_edge_graph(road);
-		write graph_per_mobility_2;
 
 		// Buildings including heigt from building level if in data, else random building level between 1 and 5:
 		create building from: buildings_shapefile with:
@@ -146,7 +145,7 @@ global {
 
 		}
 
-		create externalCities from: external_shapefile with: [train::bool(get("train"))];
+		create externalCities from: external_shapefile with: [train::string(get("train"))];
 		create bus_stop from: bus_shapefile;
 
 		// Bus EBW
@@ -174,17 +173,9 @@ global {
 		}
 		*/
 
-// shared_bikes are distributed randomly at the sharing_stations:
-		create shared_bike number: round(nb_shared_bikes / 1000 * (nb_people + nb_pendler)) {
-			location <- one_of(sharing_station).location;
-			in_use <- false;
-			closest_sharing_station <- sharing_station with_min_of (each distance_to (self));
-			color <- #red;
-			add self to: closest_sharing_station.parked_bikes;
-		}
 
 		// inital number of people created:
-		create people number: nb_people {
+		create people number: 500 {
 			type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
 			vehicle_in_use <- nil;
 			has_car <- flip(proba_car_per_type[type]);
@@ -206,10 +197,10 @@ global {
 
 		//nb_pendler
 		ask externalCities {
-			create people number: nb_pendler {
+			create people number: round(nb_pendler*0.01*nb_people/length(externalCities)) {
 			//TODO: (Ein)pendler sollten nur Arbeitnehmer sein
-				type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
-				if myself.train = true {
+				type <- one_of("Arbeitnehmer","Fuehrungskraefte");
+				if myself.train = "T" {
 					has_bike <- flip(proba_bike_per_type[type]);
 					has_bikesharing <- flip(proba_bikesharing_per_type[type]);
 					has_car <- false;
@@ -235,6 +226,15 @@ global {
 				do create_activites;
 			}
 
+		}
+		
+// shared_bikes are distributed randomly at the sharing_stations:
+		create shared_bike number: round(nb_shared_bikes / 1000 * (length(people))) {
+			location <- one_of(sharing_station).location;
+			in_use <- false;
+			closest_sharing_station <- sharing_station with_min_of (each distance_to (self));
+			color <- #red;
+			add self to: closest_sharing_station.parked_bikes;
 		}
 		//init end:
 	}
@@ -580,9 +580,17 @@ global {
 					list<string> parse_act <- act split_with "|";
 					string act_real <- one_of(parse_act);
 					list<building> possible_bds;
-					if (length(act_real) = 2) and (first(act_real) = "R") {
+					list<externalCities> possible_ec;
+					// "Auspendler" are going to externalCities with parameter train = F if they have a car:
+					if (act_real = "E" and has_car = true) {
+						possible_bds <- externalCities where (each.train = "F");
+					}
+					// "Auspendler" are going to externalCities with parameter train = T if they have no car --> they will take the train in the end:
+					else if (act_real = "E" and has_car = false) {
+						possible_bds <- externalCities where (each.train = "T");
+					}
+					else if (length(act_real) = 2) and (first(act_real) = "R") {
 						possible_bds <- [self.living_place];
-						//possible_bds <- building where ((each.usage = "R") and (each.scale = last(act_real)));
 					} else if (length(act_real) = 2) and (first(act_real) = "O") {
 						possible_bds <- building where ((each.usage = "O") and (each.scale = last(act_real)));
 					} else {
@@ -949,7 +957,7 @@ global {
 	}
 
 	species externalCities parent: building {
-		bool train;
+		string train;
 		string id;
 		string usage <- "R";
 		string scale <- "M";

@@ -173,8 +173,7 @@ global {
 		}
 		*/
 
-
-		// inital number of people created:
+// inital number of people created:
 		create people number: 500 {
 			type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
 			vehicle_in_use <- nil;
@@ -197,9 +196,9 @@ global {
 
 		//nb_pendler
 		ask externalCities {
-			create people number: round(nb_pendler*0.01*nb_people/length(externalCities)) {
+			create people number: round(nb_pendler * 0.01 * nb_people / length(externalCities)) {
 			//TODO: (Ein)pendler sollten nur Arbeitnehmer sein
-				type <- one_of("Arbeitnehmer","Fuehrungskraefte");
+				type <- one_of("Arbeitnehmer", "Fuehrungskraefte");
 				if myself.train = "T" {
 					has_bike <- flip(proba_bike_per_type[type]);
 					has_bikesharing <- flip(proba_bikesharing_per_type[type]);
@@ -227,8 +226,8 @@ global {
 			}
 
 		}
-		
-// shared_bikes are distributed randomly at the sharing_stations:
+
+		// shared_bikes are distributed randomly at the sharing_stations:
 		create shared_bike number: round(nb_shared_bikes / 1000 * (length(people))) {
 			location <- one_of(sharing_station).location;
 			in_use <- false;
@@ -586,10 +585,9 @@ global {
 						possible_bds <- externalCities where (each.train = "F");
 					}
 					// "Auspendler" are going to externalCities with parameter train = T if they have no car --> they will take the train in the end:
-					else if (act_real = "E" and has_car = false) {
+else if (act_real = "E" and has_car = false) {
 						possible_bds <- externalCities where (each.train = "T");
-					}
-					else if (length(act_real) = 2) and (first(act_real) = "R") {
+					} else if (length(act_real) = 2) and (first(act_real) = "R") {
 						possible_bds <- [self.living_place];
 					} else if (length(act_real) = 2) and (first(act_real) = "O") {
 						possible_bds <- building where ((each.usage = "O") and (each.scale = last(act_real)));
@@ -603,11 +601,7 @@ global {
 					}
 
 					do create_trip_objectives(act_real, act_build, activities[act]);
-				}
-
-			}
-
-		}
+				} } }
 
 		action choose_living_place {
 			list<building> possible_living_bds;

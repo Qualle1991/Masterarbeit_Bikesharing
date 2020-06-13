@@ -24,7 +24,7 @@ global {
 	string scenario <- "Ausgewogen" parameter: "Szenario: " among: ["Kein Bikesharing", "Ausgewogen", "Freefloat"] category: "Voreinstellung";
 	bool planned_distribution <- true parameter: "Verteilung Stationen geplant? (sonst Anordnung zufällig) " among: [true, false] category: "Voreinstellung";
 	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 1 max: 10000 category: "Voreinstellung";
-	int nb_pendler <- 25 parameter: "Anteil der Einpendler an Gesamtbevölkerung (in%): " min: 0 max: 100 category: "Voreinstellung";
+	int prop_pendler <- 25 parameter: "Anteil der Einpendler an Gesamtbevölkerung (in%): " min: 0 max: 100 category: "Voreinstellung";
 	int nb_shared_bikes <- 10 parameter: "Anzahl der Shared Bikes (pro 1000): " min: 0 max: 100 category: "Voreinstellung";
 	//Choice for sharing_station-creation-mode:
 	string creation_mode <- "Off" among: ["On", "Off"] parameter: "Klickaktion" category: "Interaktion";
@@ -194,9 +194,9 @@ global {
 			do create_activites;
 		}
 
-		//nb_pendler
+		//prop_pendler
 		ask externalCities {
-			create people number: round(nb_pendler * 0.01 * nb_people / length(externalCities)) {
+			create people number: round(prop_pendler * 0.01 * nb_people / length(externalCities)) {
 			//TODO: (Ein)pendler sollten nur Arbeitnehmer sein
 				type <- one_of("Arbeitnehmer", "Fuehrungskraefte");
 				if myself.train = "T" {

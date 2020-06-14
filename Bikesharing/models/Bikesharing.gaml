@@ -1,7 +1,7 @@
 /*
 * Name: Bikesharing
 * Author: Pascal Schwerk
-* Description: Game on Luckenwalde with bikesharing, based on Game It by Tallaindier et al. and Eberswalde by //TODO: Quellenangabe
+* Description: Game on Luckenwalde with bikesharing, based on Game It by Grignard et al. (2018) and Eberswalde by Priebe, Szczepanska, Higi, & Schröder (eingereicht).
 * Tags: bikesharing, newmobility
 */
 model Bikesharing
@@ -22,12 +22,14 @@ global {
 	//Choice for using Google forms instead of fixed profile_file:
 	string profile_input_mode <- "Feste Profil-Datei" among: ["Feste Profil-Datei", "Google Umfrage"] parameter: "Profil Import" category: "Voreinstellung";
 	string scenario <- "Ausgewogen" parameter: "Szenario: " among: ["Kein Bikesharing", "Ausgewogen", "Freefloat"] category: "Voreinstellung";
-	bool planned_distribution <- true parameter: "Verteilung Stationen geplant? (sonst Anordnung zufällig) " among: [true, false] category: "Voreinstellung";
-	int nb_people <- 500 parameter: "Anzahl der Personen: " min: 1 max: 10000 category: "Voreinstellung";
-	int prop_pendler <- 25 parameter: "Anteil der Einpendler an Gesamtbevölkerung (in%): " min: 0 max: 100 category: "Voreinstellung";
-	int nb_shared_bikes <- 10 parameter: "Anzahl der Shared Bikes (pro 1000): " min: 0 max: 100 category: "Voreinstellung";
+	bool planned_distribution <- true parameter: "Verteilung Stationen geplant? (sonst Anordnung zufällig) " category: "Voreinstellung";
+	int nb_inhabitants <- 20000 parameter: "Anzahl der Einwohner: " category: "Voreinstellung";
+	int nb_people <- 1000 parameter: "Anzahl der Personen im Experiment: " min: 100 max: 10000 step: 100 category: "Voreinstellung";
+	int prop_pendler <- 25 parameter: "Anteil der zusätzlichen Einpendler (in%): " min: 0 max: 100 step: 1 category: "Voreinstellung";
+	int nb_shared_bikes <- 10 parameter: "Anzahl der Leihfahrräder (pro 1000 Einwohner): " min: 0 max: 100 step: 1 category: "Voreinstellung";
 	//Choice for sharing_station-creation-mode:
-	string creation_mode <- "Off" among: ["On", "Off"] parameter: "Klickaktion" category: "Interaktion";
+	bool creation_mode <- false parameter: "Stationen auf Karte hinzufügen:" category: "Interaktion";
+	bool disposition_setting <- true parameter: "Nächtliche Disposition durchführen:" category: "Interaktion";
 	string scale_sharing_stations;
 
 	//Shapefiles:
@@ -38,6 +40,7 @@ global {
 	//file<geometry> roads_shapefile <- shape_file(ProjectFolder + "/200219 Luckenwalde highways 1437.shp");
 	file<geometry> bus_shapefile <- shape_file(ProjectFolder + "/bus_stops.shp");
 
+	//TODO: Background Map schön machen
 	//file background_img <- file(GISFolder + "/background.jpg");
 	file performance_chart <- file("./../includes/images/performance_chart_bg.png");
 	geometry shape <- envelope(roads_shapefile);
@@ -56,7 +59,7 @@ global {
 	map<string, rgb>
 	color_per_category <- ["Restaurant"::#green, "Night"::#dimgray, "GP"::#dimgray, "Cultural"::#green, "Park"::#green, "Shopping"::#green, "HS"::#darkorange, "Uni"::#pink, "O"::#gray, "R"::#grey];
 	map<string, rgb>
-	color_per_type <- ["Auspendler"::#purple, "Schueler"::#gamablue, "Arbeitnehmer"::#cornflowerblue, "Fuehrungskraefte"::#lightgrey, "Heimzentrierte"::#yellow, "Rentner"::#mediumturquoise];
+	color_per_type <- ["Auspendler"::#purple, "Schueler"::#gamablue, "Arbeitnehmer"::#cornflowerblue, "Heimzentrierte"::#yellow, "Rentner"::#mediumturquoise];
 	map<string, map<string, int>> activity_data;
 	map<string, float> proportion_per_type;
 	map<string, float> proba_bike_per_type;
@@ -95,9 +98,9 @@ global {
 		do evaluate_scenario;
 
 		//gama.pref_display_flat_charts <- true;
-		create road from: roads_shapefile //with: [mobility_allowed::(string(read("mobility_a")) split_with "|")] TODO: Funktioniert an sich, wird aber erst eingebaut, wenn Straßen funktionieren
+		create road from: roads_shapefile with: [mobility_allowed::(string(read("mobility_a")) split_with "|")]
 		{
-			mobility_allowed <- ["walking", "bike", "car", "bus", "shared_bike"];
+			//mobility_allowed <- ["walking", "bike", "car", "bus", "shared_bike"];
 			capacity <- shape.perimeter / 10.0;
 			congestion_map[self] <- 10.0; //shape.perimeter;
 		}
@@ -108,7 +111,7 @@ global {
 
 		// Buildings including heigt from building level if in data, else random building level between 1 and 5:
 		create building from: buildings_shapefile with:
-		[usage::string(read("usage")), scale::string(read("scale")), category::string(read("category")), level::int(read("building_l")), proba_under18::float(read("unter18_A")) / 100, proba_18to65::float(read("18bis65_A")) / 100, proba_over65::float(read("ab65_A")) / 100, proba_density::float(read("density"))]
+		[usage::string(read("usage")), category::string(read("category")), level::int(read("building_l")), proba_under18::float(read("unter18_A")) / 100, proba_18to65::float(read("18bis65_A")) / 100, proba_over65::float(read("ab65_A")) / 100, proba_density::float(read("density"))]
 		{
 			color <- color_per_category[category];
 			group <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
@@ -174,7 +177,7 @@ global {
 		*/
 
 // inital number of people created:
-		create people number: 500 {
+		create people number: nb_people {
 			type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
 			vehicle_in_use <- nil;
 			has_car <- flip(proba_car_per_type[type]);
@@ -197,8 +200,8 @@ global {
 		//prop_pendler
 		ask externalCities {
 			create people number: round(prop_pendler * 0.01 * nb_people / length(externalCities)) {
-			//TODO: (Ein)pendler sollten nur Arbeitnehmer sein
-				type <- one_of("Arbeitnehmer", "Fuehrungskraefte");
+			//(Ein)pendler are always Arbeitnehmer
+				type <- "Arbeitnehmer";
 				if myself.train = "T" {
 					has_bike <- flip(proba_bike_per_type[type]);
 					has_bikesharing <- flip(proba_bikesharing_per_type[type]);
@@ -228,7 +231,7 @@ global {
 		}
 
 		// shared_bikes are distributed randomly at the sharing_stations:
-		create shared_bike number: round(nb_shared_bikes / 1000 * (length(people))) {
+		create shared_bike number: round(nb_shared_bikes / 1000 * nb_inhabitants){
 			location <- one_of(sharing_station).location;
 			in_use <- false;
 			closest_sharing_station <- sharing_station with_min_of (each distance_to (self));
@@ -257,7 +260,7 @@ global {
 
 	// Clicking action: Place the new sharing_station on the street next to users' location
 	action create_sharing_station {
-		if creation_mode = "On" {
+		if creation_mode = true {
 			create sharing_station number: 1 {
 				location <- location of (road closest_to (#user_location));
 				parked_bikes <- nil;
@@ -419,8 +422,8 @@ global {
 		}
 
 		if (day_counter > 0) {
-			usage_per_bike_per_day <- round(y / length(shared_bike) / day_counter);
-			trips_per_thousand <- round(y / length(people) * 1000 / day_counter);
+			usage_per_bike_per_day <- round(y*(nb_inhabitants/length(people)) / length(shared_bike) / day_counter);
+			trips_per_thousand <- round(y / length(people) * 1000 / (nb_inhabitants/length(people)) / day_counter);
 		}
 
 		//global end:
@@ -525,9 +528,12 @@ global {
 		}
 
 		// Distribute bicycles evenly among stations at fixed times:
+		
 		reflex disposition when: current_date.hour = rnd(3, 7) {
+			if(disposition_setting = true){
 			do collect_bikes;
 			do distribute_bikes;
+			}
 		}
 
 		aspect default {
@@ -580,17 +586,11 @@ global {
 					string act_real <- one_of(parse_act);
 					list<building> possible_bds;
 					list<externalCities> possible_ec;
-					// "Auspendler" are going to externalCities with parameter train = F if they have a car:
-					if (act_real = "E" and has_car = true) {
+					// "Auspendler" are going to externalCities:
+					if (act_real = "E" and has_car = true) { //with parameter train = F if they have a car
 						possible_bds <- externalCities where (each.train = "F");
-					}
-					// "Auspendler" are going to externalCities with parameter train = T if they have no car --> they will take the train in the end:
-else if (act_real = "E" and has_car = false) {
+					} else if (act_real = "E" and has_car = false) { //with parameter train = T if they have no car --> they will take the train in the end:
 						possible_bds <- externalCities where (each.train = "T");
-					} else if (length(act_real) = 2) and (first(act_real) = "R") {
-						possible_bds <- [self.living_place];
-					} else if (length(act_real) = 2) and (first(act_real) = "O") {
-						possible_bds <- building where ((each.usage = "O") and (each.scale = last(act_real)));
 					} else {
 						possible_bds <- building where (each.category = act_real);
 					}
@@ -934,7 +934,6 @@ else if (act_real = "E" and has_car = false) {
 	species building {
 		string usage;
 		string group;
-		string scale;
 		string category;
 		float proba_under18;
 		float proba_18to65;
@@ -954,7 +953,6 @@ else if (act_real = "E" and has_car = false) {
 		string train;
 		string id;
 		string usage <- "R";
-		string scale <- "M";
 		string category <- "R";
 
 		aspect default {

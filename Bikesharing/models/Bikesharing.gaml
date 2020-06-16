@@ -15,8 +15,7 @@ global {
 	string case_study <- "luckenwalde";
 	string EPSG <- "EPSG:25833";
 	//URL for Google Forms result:
-	string
-	url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdj4Dvf3TyVUgbW2jF3YN7NXbrN1qUGa3XGhiiiMiARxpMXsKRyzugMY3eglHjsRLLtZPiOhbOEG1e/pub?gid=2013234065&single=true&output=csv";
+	string url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdj4Dvf3TyVUgbW2jF3YN7NXbrN1qUGa3XGhiiiMiARxpMXsKRyzugMY3eglHjsRLLtZPiOhbOEG1e/pub?gid=2013234065&single=true&output=csv";
 
 	//USER INTERACTION:	
 	//Choice for using Google forms instead of fixed profile_file:
@@ -30,7 +29,6 @@ global {
 	//Choice for sharing_station-creation-mode:
 	bool creation_mode <- false parameter: "Stationen auf Karte hinzufügen:" category: "Interaktion";
 	bool disposition_setting <- true parameter: "Nächtliche Disposition durchführen:" category: "Interaktion";
-	string scale_sharing_stations;
 
 	//Shapefiles:
 	string ProjectFolder <- "./../includes/City/" + case_study;
@@ -49,15 +47,16 @@ global {
 	float max_speed_general <- 50.0;
 
 	// MOBILITY DATA
-	list<string> mobility_list <- ["walking", "bike", "car", "bus", "shared_bike"];
+	
 	file activity_file <- file(ProjectFolder + "/profiles_and_modes/ActivityPerProfile.csv");
 	file criteria_file <- file(ProjectFolder + "/profiles_and_modes/CriteriaFile.csv");
 	file mode_file <- file(ProjectFolder + "/profiles_and_modes/Modes.csv");
+	list<string> mobility_list <- first(columns_list(matrix(mode_file)));
 	file profile_file;
 
 	//MAPS
 	map<string, rgb>
-	color_per_category <- ["Restaurant"::#green, "Night"::#dimgray, "GP"::#dimgray, "Cultural"::#green, "Park"::#green, "Shopping"::#green, "HS"::#darkorange, "Uni"::#pink, "O"::#gray, "R"::#grey];
+	color_per_category <- ["Restaurant"::#lightskyblue, "Cultural"::#lightskyblue, "Park"::#green, "Shopping"::#lightskyblue, "HS"::#gold, "O"::#mediumaquamarine, "R"::#lightsalmon];
 	map<string, rgb>
 	color_per_type <- ["Auspendler"::#purple, "Schueler"::#gamablue, "Arbeitnehmer"::#cornflowerblue, "Heimzentrierte"::#yellow, "Rentner"::#mediumturquoise];
 	map<string, map<string, int>> activity_data;
@@ -75,9 +74,9 @@ global {
 	map<string, map<string, list<float>>> weights_map <- map([]);
 
 	// INDICATOR
-	map<string, int> transport_type_cumulative_usage <- map(mobility_list collect (each::0));
-	map<string, int> transport_type_cumulative_usage_per_day <- map(mobility_list collect (each::0));
-	map<string, int> buildings_distribution <- map(color_per_category.keys collect (each::0));
+	map<string, int> transport_type_cumulative_usage;
+	map<string, int> transport_type_cumulative_usage_per_day;
+	map<string, int> buildings_distribution;
 
 	//TESTING-COUNTERS
 	int counter_rides <- 0;
@@ -89,6 +88,7 @@ global {
 	int trips_per_thousand;
 
 	init {
+		write mobility_list;
 	// imports for people data:
 		do import_profile_file;
 		do profils_data_import;
@@ -96,6 +96,7 @@ global {
 		do criteria_file_import;
 		do characteristic_file_import;
 		do evaluate_scenario;
+		
 
 		//gama.pref_display_flat_charts <- true;
 		create road from: roads_shapefile with: [mobility_allowed::(string(read("mobility_a")) split_with "|")]
@@ -114,7 +115,6 @@ global {
 		[usage::string(read("usage")), category::string(read("category")), level::int(read("building_l")), proba_under18::float(read("unter18_A")) / 100, proba_18to65::float(read("18bis65_A")) / 100, proba_over65::float(read("ab65_A")) / 100, proba_density::float(read("density"))]
 		{
 			color <- color_per_category[category];
-			group <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
 			if (level > 0) {
 				height <- 2.6 * level;
 			} else {
@@ -187,7 +187,6 @@ global {
 			} else {
 				has_bikesharing <- flip(proba_bikesharing_per_type[type]);
 			}
-			//living_place <- one_of(building where (each.usage = "R" and each.group = self.type));
 			do choose_living_place;
 			current_place <- living_place;
 			location <- any_location_in(living_place);
@@ -237,7 +236,14 @@ global {
 			closest_sharing_station <- sharing_station with_min_of (each distance_to (self));
 			color <- #red;
 			add self to: closest_sharing_station.parked_bikes;
+			
 		}
+		
+		// INDICATOR
+		transport_type_cumulative_usage <- map(mobility_list collect (each::0));
+		transport_type_cumulative_usage_per_day <- map(mobility_list collect (each::0));
+		buildings_distribution <- map(color_per_category.keys collect (each::0));
+		
 		//init end:
 	}
 
@@ -248,7 +254,8 @@ global {
 		}
 
 	}
-
+	
+	string scale_sharing_stations;
 	action evaluate_scenario {
 		if (scenario = "Ausgewogen") {
 			scale_sharing_stations <- "mid";
@@ -409,13 +416,14 @@ global {
 	// Save cumulated numbers every evening for the daily charts: 
 	reflex save_cumulative_trips_per_day {
 		if (current_date.hour = 23 and current_date.minute = 0) {
-			transport_type_cumulative_usage_per_day <-
-			["walking"::transport_type_cumulative_usage.values[0], "bike"::transport_type_cumulative_usage.values[1], "car"::transport_type_cumulative_usage.values[2], "bus"::transport_type_cumulative_usage.values[3], "shared_bike"::transport_type_cumulative_usage.values[4]];
+			loop i from: 0 to: length(mobility_list)-1{
+			add mobility_list[i]::transport_type_cumulative_usage.values[i] to:transport_type_cumulative_usage_per_day;	
+			}
 		}
 
 	}
 
-	reflex calculate_sharing_usage {
+	reflex calculate_sharing_usage when: (scenario != "Kein Bikesharing")  {
 		int y;
 		loop i from: 0 to: length(shared_bike) - 1 {
 			y <- y + shared_bike[i].usage_counter;
@@ -723,8 +731,10 @@ global {
 					possible_mobility_modes << "walking";
 					possible_mobility_modes << "bus";
 					//Shared bike has to be available: 
-					if (has_bikesharing and (length(self.closest_sharing_station.parked_bikes) > 0)) {
-						possible_mobility_modes << "shared_bike";
+					if(scenario != "Kein Bikesharing"){
+						if (has_bikesharing and length(self.closest_sharing_station.parked_bikes) > 0) {
+							possible_mobility_modes << "shared_bike";
+						}
 					}
 
 				}
@@ -933,7 +943,6 @@ global {
 
 	species building {
 		string usage;
-		string group;
 		string category;
 		float proba_under18;
 		float proba_18to65;
@@ -1017,65 +1026,51 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 			species shared_bike;
 			species bus aspect: default;
 			species people aspect: default;
-			graphics "time" {
-				draw string("Uhrzeit: " + current_date.hour) + ":" + string(current_date.minute) color: #darkgrey font: font("Arial", 30, #italic) at:
-				{world.shape.width * 0, world.shape.height * 0.99};
-			}
 
-			graphics "Bike usage" {
-				draw string("Use per Bike per Day: " + usage_per_bike_per_day) at: {world.shape.width * 1, world.shape.height * 0.6} color: (usage_per_bike_per_day < 4) ? #red : #green;
-				draw string("Average usage per 1000 People: " + trips_per_thousand) at: {world.shape.width * 1, world.shape.height * 0.65} color: (trips_per_thousand < 30) ? #red : #green;
-				draw string("Days: " + day_counter) at: {world.shape.width * 1, world.shape.height * 0.7} color: #white;
-				draw string("Fahrten angetreten: " + counter_rides) at: {world.shape.width * 1, world.shape.height * 0.75} color: #white;
-				draw string("Fahrten beendet: " + counter_succeeded) at: {world.shape.width * 1, world.shape.height * 0.8} color: #white;
-			}
-
+/*
 			chart "People Distribution" type: pie style: ring size: {0.5, 0.5} position: {1, 0} background: #black color: #black title_font: "Arial" {
 				loop i from: 0 to: length(proportion_per_type.keys) - 1 {
 					data proportion_per_type.keys[i] value: proportion_per_type.values[i] color: color_per_type[proportion_per_type.keys[i]];
 				}
 
-			}
+			} */
 
-			//   		 overlay position: { 5, 5 } size: { 240 # px, 680 # px } background: # black transparency: 1.0 border: # black
-			//   		 {
-			//   			 rgb text_color <- # white;
-			//   			 float y <- 30 # px;
-			//   			 draw "Building Usage" at: { 40 # px, y } color: text_color font: font("Helvetica", 20, # bold) perspective: false;
-			//   			 y <- y + 50 # px;
-			//   			 loop type over: color_per_category.keys
-			//   			 {
-			//   				 draw square(10 # px) at: { 20 # px, y } color: color_per_category[type] border: # white;
-			//   				 draw type at: { 40 # px, y + 4 # px } color: text_color font: font("Helvetica", 18, # plain) perspective: false;
-			//   				 y <- y + 50 # px;
-			//   			 }
-			//
-			//   			 y <- y + 30 # px;
-			//   			 draw "People Type" at: { 40 # px, y } color: text_color font: font("Helvetica", 20, # bold) perspective: false;
-			//   			 y <- y + 30 # px;
-			//   			 loop type over: color_per_type.keys
-			//   			 {
-			//   				 draw square(10 # px) at: { 20 # px, y } color: color_per_type[type] border: # white;
-			//   				 draw type at: { 40 # px, y + 4 # px } color: text_color font: font("Helvetica", 18, # plain) perspective: false;
-			//   				 y <- y + 25 # px;
-			//   			 }
-			//
-			//   			 y <- y + 30 # px;
-			//   			 draw "Mobility Mode" at: { 40 # px, 600 # px } color: text_color font: font("Helvetica", 20, # bold) perspective: false;
-			//   			 map<string, rgb> list_of_existing_mobility <- map<string, rgb> (["Walking"::# green, "Bike"::# yellow, "Car"::# red, "Bus"::# blue]);
-			//   			 
-			//   			 y <- y + 30 # px;
-			//   			 loop i from: 0 to: length(list_of_existing_mobility) - 1
-			//   			 {
-			//   				 draw list_of_existing_mobility.keys[i] at: { 40 # px, 610 # px + (i + 1) * 30 # px } color: list_of_existing_mobility.values[i] font: font("Helvetica", 18, # plain)
-			//   				 perspective: false;
-			//   			 }
-			//
-			//   		 }
-
+			overlay position: { 5, 5 } size: { 240 # px, 680 # px } background: # black transparency: 1.0 border: # black
+			{
+				rgb text_color <- # white;
+				float y <- 30 # px;
+				draw "Building Usage" at: { 40 # px, y } color: text_color font: font("Helvetica", 20, # bold) perspective: false;
+				y <- y + 50 # px;
+				loop type over: color_per_category.keys
+				{
+					draw square(10 # px) at: { 20 # px, y } color: color_per_category[type] border: # white;
+					draw type at: { 40 # px, y + 4 # px } color: text_color font: font("Helvetica", 18, # plain) perspective: false;
+					y <- y + 50 # px;
+				}
+				
+				y <- y + 30 # px;
+				draw "People Type" at: { 40 # px, y } color: text_color font: font("Helvetica", 20, # bold) perspective: false;
+				y <- y + 30 # px;
+				loop type over: color_per_type.keys
+				{
+					draw square(10 # px) at: { 20 # px, y } color: color_per_type[type] border: # white;
+					draw type at: { 40 # px, y + 4 # px } color: text_color font: font("Helvetica", 18, # plain) perspective: false;
+					y <- y + 25 # px;
+				}
+				
+				if(scenario != "Kein Bikesharing")
+				{ 
+					draw ("Use per Bike per Day: " + usage_per_bike_per_day) at: {world.shape.width * 0.25, world.shape.height * 0.98} color: (usage_per_bike_per_day < 4) ? #red : #green;
+					draw ("Average usage per 1000 People: " + trips_per_thousand) at: {world.shape.width * 0.25, world.shape.height * 1} color: (trips_per_thousand < 30) ? #red : #green;
+				}
+					draw ("Fahrten angetreten: " + counter_rides) at: {world.shape.width * 0, world.shape.height * 0.98} color: #white;
+					draw ("Fahrten beendet: " + counter_succeeded) at: {world.shape.width * 0, world.shape.height * 1} color: #white;
+					draw ("Uhrzeit: " + current_date.hour) + ":" + (current_date.minute) at: {world.shape.width * 1.1, world.shape.height * 0.05} color: #darkgrey font: font("Arial", 30, #italic);
+				}
+		
 		}
 
-		display chart type: java2D background: #black draw_env: false refresh: every(10 #cycle) {
+		display Live_Usage type: java2D background: #black draw_env: false refresh: every(10 #cycle) {
 			chart "Fahrten tageweise" type: pie style: ring position: {0, 0} size: {0.5, 0.5} background: #black color: #white title_font: "Arial" {
 				loop i from: 0 to: length(transport_type_cumulative_usage.keys) - 1 {
 					data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color: color_per_mobility[transport_type_cumulative_usage.keys[i]];
@@ -1090,19 +1085,9 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 
 			}
 
-			graphics "Nb_Agents:" {
-				draw string(sum_of(transport_type_cumulative_usage.values, each)) color: #white font: font("Helvetica", 28, #bold);
-				//   			 draw string("   ?") color: # white font: font("Helvetica", 28, # bold) at: { world.shape.width * 0.11, 0.76 * world.shape.height };
-				//   			 draw string("Mobilitäts-Modus: ") color: # white font: font("Helvetica", 28, # none) at: { world.shape.width * 0.62, 0.71 * world.shape.height };
-				//   			 draw string("Zu Fuß") color: # gold font: font("Helvetica", 24, # none) at: { world.shape.width * 0.765, 0.71 * world.shape.height };
-				//   			 draw string("Fahrrad") color: # orangered font: font("Helvetica", 24, # none) at: { world.shape.width * 0.81, 0.71 * world.shape.height };
-				//   			 draw string("Auto") color: # maroon font: font("Helvetica", 24, # none) at: { world.shape.width * 0.857, 0.71 * world.shape.height };
-				//   			 draw string("Bus") color: # lightgrey font: font("Helvetica", 24, # none) at: { world.shape.width * 0.888, 0.71 * world.shape.height };
-			}
-
 		}
 
-		display chart_2 type: java2D background: #black refresh: every(#day) {
+		display Usage_per_Day type: java2D background: #black refresh: every(#day) {
 			chart "Fahrten tageweise" type: series x_serie_labels: day_x_label background: #black color: #white title_font: "Arial" {
 				loop i from: 0 to: length(transport_type_cumulative_usage_per_day.keys) - 1 {
 					data transport_type_cumulative_usage_per_day.keys[i] value: transport_type_cumulative_usage_per_day.values[i] color:

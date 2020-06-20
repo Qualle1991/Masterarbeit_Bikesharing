@@ -10,7 +10,7 @@ global {
 
 //ENVIRONMENT
 	float step <- 10 #mn update: 10 #mn;
-	date starting_date <- date([2020, 4, 1, 0, 0]);
+	date starting_date <- date([2020, 4, 1, 1, 0]);
 	// case_study needs a folder named like the city in focus
 	string case_study <- "luckenwalde";
 	string EPSG <- "EPSG:25833";
@@ -53,12 +53,19 @@ global {
 	file mode_file <- file(ProjectFolder + "/profiles_and_modes/Modes.csv");
 	list<string> mobility_list <- first(columns_list(matrix(mode_file)));
 	file profile_file;
+	
+	// Artificial Usage of Bikesharing:
+	float artificial_simulation_rides_per_bike;
+	float artificial_simulation_rides_absolute;
+	int artificial_simulation_rides_per_30min;
+	list<shared_bike> free_bikes;
+	list<shared_bike> artificial_used_bikes;
 
 	//MAPS
 	map<string, rgb>
-	color_per_category <- ["Restaurant"::#lightskyblue, "Cultural"::#lightskyblue, "Park"::#green, "Shopping"::#lightskyblue, "HS"::#gold, "O"::#mediumaquamarine, "R"::#lightsalmon];
+	color_per_category <- ["Restaurant"::#chocolate, "Cultural"::#darkgreen, "Park"::#green, "Shopping"::#chocolate, "HS"::#dimgrey, "O"::#dimgrey, "R"::#darkgrey];
 	map<string, rgb>
-	color_per_type <- ["Auspendler"::#purple, "Schueler"::#gamablue, "Arbeitnehmer"::#cornflowerblue, "Heimzentrierte"::#yellow, "Rentner"::#mediumturquoise];
+	color_per_type <- ["Auspendler"::#purple, "Schueler"::#gamablue, "Arbeitnehmer"::#yellow, "Heimzentrierte"::#cornflowerblue, "Rentner"::#mediumturquoise];
 	map<string, map<string, int>> activity_data;
 	map<string, float> proportion_per_type;
 	map<string, float> proba_bike_per_type;
@@ -76,6 +83,7 @@ global {
 	// INDICATOR
 	map<string, int> transport_type_cumulative_usage;
 	map<string, int> transport_type_cumulative_usage_per_day;
+	map<string, int> alltime_transport_type_cumulative_usage;
 	map<string, int> buildings_distribution;
 
 	//TESTING-COUNTERS
@@ -84,8 +92,8 @@ global {
 	int count_missed_bike <- 0;
 	int day_counter;
 	list day_x_label <- [0];
-	int usage_per_bike_per_day;
-	int trips_per_thousand;
+	float trips_per_bike_per_day;
+	float trips_per_thousand_per_day;
 
 	init {
 		write mobility_list;
@@ -158,24 +166,6 @@ global {
 			stop_passengers <- map<bus_stop, list<people>>(stops collect (each::[]));
 		}
 
-		/*
-		// Four Busses for Luckenwalde to simulate an hourly cycle:
-		loop i from: 0 to: 3 {
-			create bus {
-				stops <- list(bus_stop);
-				location <- stops[i * 8].location;
-				loop y from: 0 to: i * 8 {
-					bus_stop firstStop <- first(stops);
-					remove firstStop from: stops;
-					add firstStop to: stops;
-				}
-
-				stop_passengers <- map<bus_stop, list<people>>(stops collect (each::[]));
-			}
-
-		}
-		*/
-
 // inital number of people created:
 		create people number: nb_people {
 			type <- proportion_per_type.keys[rnd_choice(proportion_per_type.values)];
@@ -239,12 +229,23 @@ global {
 			
 		}
 		
-		// INDICATOR
+		// Figures for charts and exports:
 		transport_type_cumulative_usage <- map(mobility_list collect (each::0));
 		transport_type_cumulative_usage_per_day <- map(mobility_list collect (each::0));
+		alltime_transport_type_cumulative_usage <- map(mobility_list collect (each::0));
 		buildings_distribution <- map(color_per_category.keys collect (each::0));
 		
-		//init end:
+		// Calculation of the number of artificially simulated bikesharing rides per 30 minutes
+		// depending on the number of inhabitants and simulated persons:
+		
+		// Rides to be simulated artificially per bike:
+		artificial_simulation_rides_per_bike <- 1.8 - (length(people)/nb_inhabitants)*1.8;
+		// Total number of trips to be artificially simulated:
+		artificial_simulation_rides_absolute <- artificial_simulation_rides_per_bike*length(shared_bike);
+		// Number of trips to be artificially simulated per half hour during rush hour (7am to 7pm):
+		artificial_simulation_rides_per_30min <- round(artificial_simulation_rides_absolute/13/2);
+		
+		// init end:
 	}
 
 	reflex update_buildings_distribution {
@@ -398,20 +399,56 @@ global {
 
 	//Save cumulative usage:
 	reflex save_mobility_data when: (true) {
-		save
-		[transport_type_cumulative_usage.values[0], transport_type_cumulative_usage.values[1], transport_type_cumulative_usage.values[2], transport_type_cumulative_usage.values[3], transport_type_cumulative_usage.values[4]]
-		rewrite: false to: "../results/mobility.csv" type: "csv";
+		list<int> saveit;
+		loop i from:0 to: length(transport_type_cumulative_usage)-1{
+			add transport_type_cumulative_usage.values[i] to: saveit;
+		}
+		save saveit rewrite: false to: "../results/mobility.csv" type: "csv";
 	}
 
 	// Cumulative trips are just stored for one day:
 	reflex reset_cumulative_trips {
 		if (current_date.hour = 6 and current_date.minute = 0) {
-			transport_type_cumulative_usage <- ["walking"::0, "bike"::0, "car"::0, "bus"::0, "shared_bike"::0];
+			loop i from: 0 to: length(transport_type_cumulative_usage)-1{
+				alltime_transport_type_cumulative_usage[alltime_transport_type_cumulative_usage.keys[i]] <- alltime_transport_type_cumulative_usage.values[i]+transport_type_cumulative_usage.values[i];
+			}
+			transport_type_cumulative_usage <- map(mobility_list collect (each::0));
 			day_counter <- day_counter + 1;
 			add day_counter to: day_x_label;
 		}
 
 	}
+	
+
+	//this reflex is responsible for the artificial utilization of bikes in case of just simulating a smaller group of the whole population of a city:
+	//it runs every half an hour at daytime
+	reflex artificial_utilization when: current_date.hour >6 and current_date.hour <20 and every(30#mn) and scenario != "Kein Bikesharing" and artificial_simulation_rides_per_30min>0 {
+		
+		// take a many bikes as the artificial simulation factor tells:
+		loop i from: 0 to: artificial_simulation_rides_per_30min{
+			//Collection of all bikes, not being in use at the moment:
+			loop y from:0 to:length(shared_bike)-1{
+				if(shared_bike[y].in_use = false){
+					add shared_bike[y] to: free_bikes;
+				}
+			}
+			//take a random bike being not in use --> put it on a collection of bikes being in artificial simulated use and set it on in_use = true: 
+			add free_bikes[rnd(0,length(free_bikes)-1)] to: artificial_used_bikes;
+			last(artificial_used_bikes).in_use <- true;
+			remove last(artificial_used_bikes) from: last(artificial_used_bikes).closest_sharing_station.parked_bikes;
+			write string(current_date.hour) + ":" + string(current_date.minute);
+			write artificial_used_bikes;
+		}
+			
+			//this part is responsible for ending the artificial utilization of bikes every 30 minutes:
+			loop while:length(artificial_used_bikes)>artificial_simulation_rides_per_30min{
+			add artificial_used_bikes[0] to: artificial_used_bikes[0].closest_sharing_station.parked_bikes;
+			artificial_used_bikes[0].in_use <- false;
+			remove artificial_used_bikes[0] from: artificial_used_bikes;
+			write string(current_date.hour) + ":" + string(current_date.minute);
+			write artificial_used_bikes;
+		}
+	} 
 
 	// Save cumulated numbers every evening for the daily charts: 
 	reflex save_cumulative_trips_per_day {
@@ -422,18 +459,19 @@ global {
 		}
 
 	}
-
-	reflex calculate_sharing_usage when: (scenario != "Kein Bikesharing")  {
+	
+	
+	reflex calculate_sharing_usage when: (current_date.hour = 0 and current_date.minute = 0 and scenario != "Kein Bikesharing")  {
 		int y;
 		loop i from: 0 to: length(shared_bike) - 1 {
 			y <- y + shared_bike[i].usage_counter;
 		}
-
 		if (day_counter > 0) {
-			usage_per_bike_per_day <- round(y*(nb_inhabitants/length(people)) / length(shared_bike) / day_counter);
-			trips_per_thousand <- round(y / length(people) * 1000 / (nb_inhabitants/length(people)) / day_counter);
+			//trips_per_bike_per_day <- round((y / (nb_shared_bikes*(1000/length(people))) / day_counter));
+			trips_per_bike_per_day <- with_precision((y / (length(shared_bike)) / day_counter),1);
+			trips_per_thousand_per_day <- with_precision((y * (1000 /length(people)) / day_counter),1);
 		}
-
+		
 		//global end:
 	}
 
@@ -640,7 +678,7 @@ global {
 			map<string, list<float>> crits <- weights_map[type];
 			list<float> vals;
 			loop obj over: crits.keys {
-				if (obj = my_current_objective.name) or ((my_current_objective.name in ["RS", "RM", "RL"]) and (obj = "R")) or ((my_current_objective.name in ["OS", "OM", "OL"]) and
+				if (obj = my_current_objective.name) or ((my_current_objective.name = "R") and (obj = "R")) or ((my_current_objective.name = "O") and
 				(obj = "O")) {
 					vals <- crits[obj];
 					break;
@@ -684,9 +722,10 @@ global {
 				list<float> characteristic <- charact_per_mobility[mode];
 				list<float> cand;
 				float distance <- 0.0;
+				distance <- distance_to(location, my_current_objective.place.location);
 				//using topology(graph_per_mobility[mode]) {
 				using topology(graph_per_mobility_2) {
-					distance <- distance_to(location, my_current_objective.place.location);
+					//distance <- distance_to(location, my_current_objective.place.location);
 				}
 
 				cand << characteristic[0] + characteristic[1] * distance;
@@ -845,16 +884,21 @@ global {
 				//do goto target: closest_sharing_station.location on: graph_per_mobility_2;
 				//Person has found a bike and takes it to the sharing_station next to the target:
 				if (location = closest_sharing_station.location and length(self.closest_sharing_station.parked_bikes) > 0) {
-					shared_bike_status <- 1;
-					current_shared_bike <- closest_sharing_station.parked_bikes[0];
-					current_shared_bike.in_use <- true;
-					current_shared_bike.usage_counter <- current_shared_bike.usage_counter + 1;
-					remove closest_sharing_station.parked_bikes[0] from: closest_sharing_station.parked_bikes;
-					//do goto target:(road with_min_of (each distance_to (self)));
-					//do goto target: sharing_station with_min_of (each distance_to (my_current_objective)) on: graph_per_mobility["shared_bike"];
-					do goto target: sharing_station with_min_of (each distance_to (my_current_objective));
-					//do goto target: sharing_station with_min_of (each distance_to (my_current_objective)) on: graph_per_mobility_2;
-					counter_rides <- counter_rides + 1;
+					if(closest_sharing_station.parked_bikes[0].in_use = false){
+						shared_bike_status <- 1;
+						current_shared_bike <- closest_sharing_station.parked_bikes[0];
+						current_shared_bike.in_use <- true;
+						current_shared_bike.usage_counter <- current_shared_bike.usage_counter + 1;
+						remove closest_sharing_station.parked_bikes[0] from: closest_sharing_station.parked_bikes;
+						//do goto target:(road with_min_of (each distance_to (self)));
+						//do goto target: sharing_station with_min_of (each distance_to (my_current_objective)) on: graph_per_mobility["shared_bike"];
+						do goto target: sharing_station with_min_of (each distance_to (my_current_objective));
+						//do goto target: sharing_station with_min_of (each distance_to (my_current_objective)) on: graph_per_mobility_2;
+						counter_rides <- counter_rides + 1;
+					}
+					else{
+						write "Alle Fahrräder sind in Benutzung";
+					}
 				}
 				// If a person arrives at the sharing_station and someone else took the last shared_bike before:
 				if (location = closest_sharing_station.location and length(self.closest_sharing_station.parked_bikes) = 0) {
@@ -970,28 +1014,29 @@ global {
 
 	} }
 
+
 experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 	output {
 	//monitor test value: current_date.hour refresh: every(1#minute);
 		display map type: opengl refresh: every(1 #cycle) draw_env: false background: #black //refresh: every(#hour)
 		{
 			event [mouse_down] action: create_sharing_station;
-			/* 
-			overlay position: { 0.1, 0.1 } size: { 240 # px, 680 # px } background: # black transparency: 1.0 border: # black
+			
+			overlay position: { 5, 5 } size: { 240 # px, 680 # px } background: # black transparency: 1.0 border: # black
 			{
 				rgb text_color <- # white;
 				float y <- 60 # px;
-				draw "Gebäudetyp" at: { 40 # px, y } color: text_color font: font("Helvetica", 48, # bold) perspective: false;
+				draw "Gebäudetypen:" at: { 40 # px, y } color: text_color font: font("Helvetica", 48, # bold) perspective: false;
 				y <- y + 40 # px;
 				loop type over: color_per_category.keys
 				{
 					draw square(12 # px) at: { 20 # px, y } color: color_per_category[type] border: # white;
-					draw type at: { 40 # px, y + 10 # px } color: color_per_category[type] font: font("Helvetica", 18 # px, # none) perspective: false;
+					draw type at: { 40 # px, y + 10 # px } color: color_per_category[type] font: font("Helvetica", 18 , # none) perspective: false;
 					y <- y + 35 # px;
 				}
 
 				y <- y + 60 # px;
-				draw "Menschen" at: { 40 # px, y } color: text_color font: font("Helvetica", 48, # bold) perspective: false;
+				draw "Mobilitätstypen:" at: { 40 # px, y } color: text_color font: font("Helvetica", 48, # bold) perspective: false;
 				y <- y + 40 # px;
 				loop type over: color_per_type.keys
 				{
@@ -1001,19 +1046,18 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 				}
 
 				y <- y + 30 # px;
-
-				//   			 draw "Mobility Mode" at: { 40 # px, 600 # px } color: text_color font: font("Helvetica", 20, # bold) perspective: false;
-				//   			 map<string, rgb> list_of_existing_mobility <- map<string, rgb> (["Walking"::#gold, "Bike"::#orangered, "Car"::#maroon, "Bus"::#lightgrey]);
-				//   			 y <- y + 30 # px;
-				//   			 loop i from: 0 to: length(list_of_existing_mobility) - 1
-				//   			 {
-				//   			 // draw circle(10#px) at: { 20#px, 600#px + (i+1)*25#px } color: list_of_existing_mobility.values[i]  border: #white;
-				//   				 draw list_of_existing_mobility.keys[i] at: { 40 # px, 610 # px + (i + 1) * 20 # px } color: list_of_existing_mobility.values[i] font: font("Helvetica", 18, # plain)
-				//   				 perspective: false;
-				//   			 }
+				
+				if(scenario != "Kein Bikesharing")
+				{ 
+					draw ("Use per Bike per Day: " + trips_per_bike_per_day) at: {world.shape.width * 0.05, world.shape.height * 0.94} color: (trips_per_bike_per_day < 4) ? #red : #green;
+					draw ("Average usage per 1000 People: " + trips_per_thousand_per_day) at: {world.shape.width * 0.05, world.shape.height * 0.96} color: (trips_per_thousand_per_day < 30) ? #red : #green;
+				}
+				draw ("Fahrten angetreten: " + counter_rides) at: {world.shape.width * 0.05, world.shape.height * 0.98} color: #white;
+				draw ("Fahrten beendet: " + counter_succeeded) at: {world.shape.width * 0.05, world.shape.height * 1} color: #white;
+				draw ("Uhrzeit: " + current_date.hour) + ":" + (current_date.minute) at: {world.shape.width * 1.1, world.shape.height * 0.05} color: #darkgrey font: font("Arial", 30, #italic);
 
 			}
-			*/
+			
 
 /*
 			image background_img;
@@ -1034,74 +1078,47 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 				}
 
 			} */
-
-			overlay position: { 5, 5 } size: { 240 # px, 680 # px } background: # black transparency: 1.0 border: # black
-			{
-				rgb text_color <- # white;
-				float y <- 30 # px;
-				draw "Building Usage" at: { 40 # px, y } color: text_color font: font("Helvetica", 20, # bold) perspective: false;
-				y <- y + 50 # px;
-				loop type over: color_per_category.keys
-				{
-					draw square(10 # px) at: { 20 # px, y } color: color_per_category[type] border: # white;
-					draw type at: { 40 # px, y + 4 # px } color: text_color font: font("Helvetica", 18, # plain) perspective: false;
-					y <- y + 50 # px;
-				}
-				
-				y <- y + 30 # px;
-				draw "People Type" at: { 40 # px, y } color: text_color font: font("Helvetica", 20, # bold) perspective: false;
-				y <- y + 30 # px;
-				loop type over: color_per_type.keys
-				{
-					draw square(10 # px) at: { 20 # px, y } color: color_per_type[type] border: # white;
-					draw type at: { 40 # px, y + 4 # px } color: text_color font: font("Helvetica", 18, # plain) perspective: false;
-					y <- y + 25 # px;
-				}
-				
-				if(scenario != "Kein Bikesharing")
-				{ 
-					draw ("Use per Bike per Day: " + usage_per_bike_per_day) at: {world.shape.width * 0.25, world.shape.height * 0.98} color: (usage_per_bike_per_day < 4) ? #red : #green;
-					draw ("Average usage per 1000 People: " + trips_per_thousand) at: {world.shape.width * 0.25, world.shape.height * 1} color: (trips_per_thousand < 30) ? #red : #green;
-				}
-					draw ("Fahrten angetreten: " + counter_rides) at: {world.shape.width * 0, world.shape.height * 0.98} color: #white;
-					draw ("Fahrten beendet: " + counter_succeeded) at: {world.shape.width * 0, world.shape.height * 1} color: #white;
-					draw ("Uhrzeit: " + current_date.hour) + ":" + (current_date.minute) at: {world.shape.width * 1.1, world.shape.height * 0.05} color: #darkgrey font: font("Arial", 30, #italic);
-				}
 		
 		}
 
-		display Live_Usage type: java2D background: #black draw_env: false refresh: every(10 #cycle) {
-			chart "Fahrten tageweise" type: pie style: ring position: {0, 0} size: {0.5, 0.5} background: #black color: #white title_font: "Arial" {
+		display Live_Usage type: java2D background: #black draw_env: false refresh: every(6 #cycle) {
+
+
+			chart "Verteilung Verkehrtypen pro Stunde (kumuliert pro Tag)" type: series position: {0, 0} size: {1, 0.5} background: #black color: #white title_font: "Arial" {
 				loop i from: 0 to: length(transport_type_cumulative_usage.keys) - 1 {
 					data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color: color_per_mobility[transport_type_cumulative_usage.keys[i]];
 				}
 
 			}
-
-			chart "Fahrten stundenweise" type: series position: {0, 0.5} size: {0.5, 0.5} background: #black color: #white title_font: "Arial" {
-				loop i from: 0 to: length(transport_type_cumulative_usage.keys) - 1 {
-					data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color: color_per_mobility[transport_type_cumulative_usage.keys[i]];
+			
+				chart "Verlauf: Nutzung Bikesharing pro Stunde (kumuliert pro Tag)" type: series position: {0, 0.5} size: {1, 0.5} background: #black color: #white title_font: "Arial" {
+					data "shared_bike" value: transport_type_cumulative_usage["shared_bike"] color: color_per_mobility["shared_bike"];
 				}
-
 			}
-
-		}
 
 		display Usage_per_Day type: java2D background: #black refresh: every(#day) {
-			chart "Fahrten tageweise" type: series x_serie_labels: day_x_label background: #black color: #white title_font: "Arial" {
+						chart "Verlauf: Verteilung Verkehrtypen pro Tag" type: series position: {0, 0.5} size: {1, 0.5} x_serie_labels: day_x_label background: #black color: #white title_font: "Arial" {
 				loop i from: 0 to: length(transport_type_cumulative_usage_per_day.keys) - 1 {
-					data transport_type_cumulative_usage_per_day.keys[i] value: transport_type_cumulative_usage_per_day.values[i] color:
-					color_per_mobility[transport_type_cumulative_usage_per_day.keys[i]];
+					data transport_type_cumulative_usage.keys[i] value: transport_type_cumulative_usage.values[i] color:
+					color_per_mobility[transport_type_cumulative_usage.keys[i]];
+				}
+
+			}
+						chart "Verteilung Verkehrtypen letzter Tag" type: pie style: ring position: {0.25, 0} size: {0.5, 0.5} background: #black color: #white title_font: "Arial" {
+				loop i from: 0 to: length(transport_type_cumulative_usage.keys) - 1 {
+					data transport_type_cumulative_usage.keys[i] value: round(transport_type_cumulative_usage.values[i]) color: color_per_mobility[transport_type_cumulative_usage.keys[i]];
 				}
 
 			}
 
 		}
+		
+		
 
 		display Performance background: #white refresh: every(#day) {
 			chart "Bike Share System Performance" tick_font: "Arial" legend_font: "Arial" label_font: "Arial" title_font: "Arial" color: #black background: #white type: xy x_tick_unit: 1.0
 			y_tick_unit: 10.0 x_range: [0, 9] y_range: [0, 70] style: dot x_label: "Trips per bike (Infrastructure usage)" y_label: "Trips per 1000 people (Market Penetration)" {
-				data 'Bikeusage' value: {usage_per_bike_per_day, trips_per_thousand} color: #black;
+				data 'Bikeusage' value: {trips_per_bike_per_day, trips_per_thousand_per_day} color: #black;
 			}
 
 			image performance_chart transparency: 0.5;
@@ -1110,3 +1127,39 @@ experiment "Starte Szenario" type: gui { //TODO: Layout map and charts
 	}
 
 }
+
+//The following experiment is a batch exploration of different amounts of bikes per 1000 inhabitants.
+//The experiment runs for 7 simulated days and will be repeated 5 times each.
+//The results for trips_per_thousand_per_day and trips_per_bike_per_day are the mean of the results of all repetitions.
+//The results of all runs are saved in a csv-file
+experiment batch_experiment_number_bikes type: batch repeat: 5 keep_seed: false until: (cycle > 1008) skills: [SQLSKILL] {
+       
+	parameter 'Anzahl der Leihfahrräder (pro 1000 Einwohner): ' var: nb_shared_bikes among: [ 5 , 10 , 20 ] unit: 'rate every cycle (1.0 means 100%)';
+    reflex end_of_runs {
+		save [day_counter, nb_shared_bikes, (simulations mean_of each.trips_per_thousand_per_day), (simulations mean_of each.trips_per_bike_per_day)] rewrite: false to: (getCurrentDateTime('yyyy-MM-dd')+"_result_batch_experiment_number_bikes.csv") type: "csv";
+    }
+    
+    permanent {
+    display Performance background: #white refresh: every(1#cycle) {
+			chart "Bike Share System Performance" tick_font: "Arial" legend_font: "Arial" label_font: "Arial" title_font: "Arial" color: #black background: #white type: xy x_tick_unit: 1.0
+			y_tick_unit: 10.0 x_range: [0, 9] y_range: [0, 70] style: dot x_label: "Trips per bike (Infrastructure usage)" y_label: "Trips per 1000 people (Market Penetration)" {
+				data 'Bikeusage' value: {trips_per_bike_per_day, trips_per_thousand_per_day} color: #black;
+			}
+		}
+	}
+}
+
+
+experiment batch_experiment_nobs_vs_bs type: batch repeat: 2 keep_seed: false until: (cycle > 504) skills: [SQLSKILL] {
+       
+	parameter 'Szenario: ' var: scenario among: [ "Kein Bikesharing", "Ausgewogen"] unit: 'rate every cycle (1.0 means 100%)';
+    reflex end_of_runs {
+    	map<string,float> mean_mode_usage;
+    	loop i from:0 to: length(alltime_transport_type_cumulative_usage)-1{
+    		add (alltime_transport_type_cumulative_usage.keys[i]::((simulations mean_of alltime_transport_type_cumulative_usage.values[i]))/day_counter) to:mean_mode_usage;
+    	}
+    	
+		save [day_counter, scenario, mean_mode_usage] rewrite: false to: (getCurrentDateTime('yyyy-MM-dd')+"_result_batch_experiment_nobs_vs_bs.csv") type: "csv";
+    }
+}
+

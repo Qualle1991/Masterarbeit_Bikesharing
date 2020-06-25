@@ -1191,6 +1191,20 @@ experiment "Batch-experiment: Planned vs. random station-distribution" type: bat
     }
 }
 
+// The following experiment is a batch exploration of two different station-densities (low=1.6 Stations/km2 and mid=13 Stations/km2).
+experiment "Batch-experiment: Density of Stations" type: batch autorun: true repeat: 50 keep_seed: true until: (cycle > 1008) skills: [SQLSKILL] {
+       
+	parameter 'Szenario: ' var: scenario among: [ "Wenige Stationen", "Ausgewogen"] unit: 'rate every cycle (1.0 means 100%)';
+    reflex end_of_runs {
+    	map<string,float> mean_mode_usage;
+    	loop i from:0 to: length(alltime_transport_type_cumulative_usage)-1{
+    		add (alltime_transport_type_cumulative_usage.keys[i]::((simulations mean_of alltime_transport_type_cumulative_usage.values[i]))/day_counter) to:mean_mode_usage;
+    	}
+		save [scenario, planned_distribution, day_counter, nb_shared_bikes, (simulations mean_of each.trips_per_thousand_per_day), (simulations mean_of each.trips_per_bike_per_day), mean_mode_usage] rewrite: false to: "../results/"+(getCurrentDateTime('yyyy-MM-dd')+"_result_batch_experiment_stationdensity.csv") type: "csv";
+    }
+    
+    }
+
 // The following experiment is a batch exploration of different amounts of bikes per 1000 inhabitants.
 experiment "Batch-experiment: Number of Bikes" type: batch autorun: true repeat: 10 keep_seed: true until: (cycle > 1008) skills: [SQLSKILL] {
        

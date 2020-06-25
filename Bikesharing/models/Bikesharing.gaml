@@ -20,7 +20,7 @@ global {
 	//USER INTERACTION:	
 	//Choice for using Google forms instead of fixed profile_file:
 	string profile_input_mode <- "Feste Profil-Datei" among: ["Feste Profil-Datei", "Google Umfrage"] parameter: "Profil Import" category: "Voreinstellung";
-	string scenario <- "Ausgewogen" parameter: "Szenario: " among: ["Kein Bikesharing", "Ausgewogen", "Freefloat"] category: "Voreinstellung";
+	string scenario <- "Ausgewogen" parameter: "Szenario: " among: ["Kein Bikesharing", "Stationen selbst setzen", "Wenige Stationen", "Ausgewogen", "Freefloat"] category: "Voreinstellung";
 	bool planned_distribution <- true parameter: "Verteilung Stationen geplant? (sonst Anordnung zufällig) " category: "Voreinstellung";
 	int nb_inhabitants <- 20000 parameter: "Anzahl der Einwohner: " category: "Voreinstellung";
 	int nb_people <- 1000 parameter: "Anzahl der Personen im Experiment: " min: 100 max: 10000 step: 100 category: "Voreinstellung";
@@ -262,7 +262,11 @@ global {
 	
 	string scale_sharing_stations;
 	action evaluate_scenario {
-		if (scenario = "Ausgewogen") {
+		if (scenario = "Stationen selbst setzen") {
+			scale_sharing_stations <- "self";
+		} else if (scenario = "Wenige Stationen") {
+			scale_sharing_stations <- "low";
+		} else if (scenario = "Ausgewogen") {
 			scale_sharing_stations <- "mid";
 		} else if (scenario = "Freefloat") {
 			scale_sharing_stations <- "high";
@@ -556,7 +560,7 @@ global {
 	//sharing_stations have a list of parked_bikes:
 		list<shared_bike> parked_bikes;
 		//The height shows how many shared_bikes are parked at the sharing_station:
-		float height <- 50.0 update: 50.0 + 50.0 * length(parked_bikes);
+		float height <- 0.0 update: 50.0 * length(parked_bikes);
 		//For bike collection and disposition:
 		list<shared_bike> collector;
 		list<sharing_station> sorted_stations;
@@ -790,7 +794,7 @@ global {
 					possible_mobility_modes << "bus";
 					//Shared bike has to be available: 
 					if(scenario != "Kein Bikesharing"){
-						if (has_bikesharing and length(self.closest_sharing_station.parked_bikes) > 0) {
+						if (has_bikesharing and (distance_to(self.location, self.closest_sharing_station.location)<=400#m) and (distance_to(self.my_current_objective, sharing_station with_min_of (each distance_to (self.my_current_objective)) )<=400#m) and length(self.closest_sharing_station.parked_bikes) > 0) {
 							possible_mobility_modes << "shared_bike";
 						}
 					}
@@ -1162,7 +1166,7 @@ experiment "Main-experiment: Playground" type: gui { //TODO: Layout map and char
 // The results of all runs are saved in a csv-file.
 
 // The following experiment is a batch exploration of the model without bikesharing and with the default setup of bikesharing.
-experiment "Batch-experiment: No BS vs. BS" type: batch autorun: true repeat: 10 keep_seed: true until: (cycle > 1008) skills: [SQLSKILL] {
+experiment "Batch-experiment: No BS vs. BS" type: batch autorun: true repeat: 50 keep_seed: true until: (cycle > 1008) skills: [SQLSKILL] {
        
 	parameter 'Szenario: ' var: scenario among: [ "Kein Bikesharing", "Ausgewogen"] unit: 'rate every cycle (1.0 means 100%)';
     reflex end_of_runs {
@@ -1170,12 +1174,12 @@ experiment "Batch-experiment: No BS vs. BS" type: batch autorun: true repeat: 10
     	loop i from:0 to: length(alltime_transport_type_cumulative_usage)-1{
     		add (alltime_transport_type_cumulative_usage.keys[i]::((simulations mean_of alltime_transport_type_cumulative_usage.values[i]))/day_counter) to:mean_mode_usage;
     	}
-		save [scenario, planned_distribution, day_counter, nb_shared_bikes, (simulations mean_of each.trips_per_thousand_per_day), (simulations mean_of each.trips_per_bike_per_day), mean_mode_usage] rewrite: false to: (getCurrentDateTime('yyyy-MM-dd')+"_result_batch_experiment_nobs_vs_bs.csv") type: "csv";
+		save [scenario, planned_distribution, day_counter, nb_shared_bikes, (simulations mean_of each.trips_per_thousand_per_day), (simulations mean_of each.trips_per_bike_per_day), mean_mode_usage] rewrite: false to: "../results/"+(getCurrentDateTime('yyyy-MM-dd')+"_result_batch_experiment_nobs_vs_bs.csv") type: "csv";
     }
 }
 
 // The following experiment is a batch exploration of the model with planned distribution of stations vs. random distribution
-experiment "Batch-experiment: Planned vs. random station-distribution" type: batch autorun: true repeat: 10 keep_seed: true until: (cycle > 1008) skills: [SQLSKILL] {
+experiment "Batch-experiment: Planned vs. random station-distribution" type: batch autorun: true repeat: 50 keep_seed: true until: (cycle > 1008) skills: [SQLSKILL] {
        
 	parameter 'Stationsanordnung: ' var: planned_distribution among:[true, false] unit: 'rate every cycle (1.0 means 100%)';
     reflex end_of_runs {
@@ -1183,7 +1187,7 @@ experiment "Batch-experiment: Planned vs. random station-distribution" type: bat
     	loop i from:0 to: length(alltime_transport_type_cumulative_usage)-1{
     		add (alltime_transport_type_cumulative_usage.keys[i]::((simulations mean_of alltime_transport_type_cumulative_usage.values[i]))/day_counter) to:mean_mode_usage;
     	}
-		save [scenario, planned_distribution, day_counter, nb_shared_bikes, (simulations mean_of each.trips_per_thousand_per_day), (simulations mean_of each.trips_per_bike_per_day), mean_mode_usage] rewrite: false to: (getCurrentDateTime('yyyy-MM-dd')+"_result_batch_experiment_planned_vs_random_stations.csv") type: "csv";
+		save [scenario, planned_distribution, day_counter, nb_shared_bikes, (simulations mean_of each.trips_per_thousand_per_day), (simulations mean_of each.trips_per_bike_per_day), mean_mode_usage] rewrite: false to: "../results/"+(getCurrentDateTime('yyyy-MM-dd')+"_result_batch_experiment_planned_vs_random_stations.csv") type: "csv";
     }
 }
 
@@ -1196,7 +1200,7 @@ experiment "Batch-experiment: Number of Bikes" type: batch autorun: true repeat:
     	loop i from:0 to: length(alltime_transport_type_cumulative_usage)-1{
     		add (alltime_transport_type_cumulative_usage.keys[i]::((simulations mean_of alltime_transport_type_cumulative_usage.values[i]))/day_counter) to:mean_mode_usage;
     	}
-		save [scenario, planned_distribution, day_counter, nb_shared_bikes, (simulations mean_of each.trips_per_thousand_per_day), (simulations mean_of each.trips_per_bike_per_day), mean_mode_usage] rewrite: false to: (getCurrentDateTime('yyyy-MM-dd')+"_result_batch_experiment_number_bikes.csv") type: "csv";
+		save [scenario, planned_distribution, day_counter, nb_shared_bikes, (simulations mean_of each.trips_per_thousand_per_day), (simulations mean_of each.trips_per_bike_per_day), mean_mode_usage] rewrite: false to: "../results/"+(getCurrentDateTime('yyyy-MM-dd')+"_result_batch_experiment_number_bikes.csv") type: "csv";
     }
     
     
@@ -1204,8 +1208,21 @@ experiment "Batch-experiment: Number of Bikes" type: batch autorun: true repeat:
     	display Performance background: #white refresh: every(1#cycle) {
 			chart "Bike Share System Performance" tick_font: "Arial" legend_font: "Arial" label_font: "Arial" title_font: "Arial" color: #black background: #white type: xy x_tick_unit: 1.0
 			y_tick_unit: 10.0 x_range: [0, 9] y_range: [0, 70] style: dot x_label: "Trips per bike (Infrastructure usage)" y_label: "Trips per 1000 people (Market Penetration)" {
-				data 'Bikeusage' value: {trips_per_bike_per_day, trips_per_thousand_per_day} color: #black;
+				data 'Bikeusage' value: {(simulations mean_of each.trips_per_bike_per_day), (simulations mean_of each.trips_per_thousand_per_day)} color: #black;
 			}
 		}
 	}
+}
+
+// The following experiment is a batch exploration of the model with activated disposition of shared bikes vs. deactivated disposition
+experiment "Batch-experiment: Disposition vs. No Disposition" type: batch autorun: true repeat: 50 keep_seed: true until: (cycle > 1008) skills: [SQLSKILL] {
+       
+	parameter 'Distribution: ' var: disposition_setting among:[true, false] unit: 'rate every cycle (1.0 means 100%)';
+    reflex end_of_runs {
+    	map<string,float> mean_mode_usage;
+    	loop i from:0 to: length(alltime_transport_type_cumulative_usage)-1{
+    		add (alltime_transport_type_cumulative_usage.keys[i]::((simulations mean_of alltime_transport_type_cumulative_usage.values[i]))/day_counter) to:mean_mode_usage;
+    	}
+		save [scenario, disposition_setting, day_counter, nb_shared_bikes, (simulations mean_of each.trips_per_thousand_per_day), (simulations mean_of each.trips_per_bike_per_day), mean_mode_usage] rewrite: false to: "../results/"+(getCurrentDateTime('yyyy-MM-dd')+"_result_batch_experiment_disposition_vs_nodisposition.csv") type: "csv";
+    }
 }

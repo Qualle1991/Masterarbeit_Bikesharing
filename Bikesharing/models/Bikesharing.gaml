@@ -406,7 +406,7 @@ global {
 	}
 
 	//Save cumulative usage:
-	reflex save_mobility_data when: (true) {
+	reflex save_mobility_data when: (false) {
 		list<int> saveit;
 		loop i from:0 to: length(transport_type_cumulative_usage)-1{
 			add transport_type_cumulative_usage.values[i] to: saveit;
@@ -1052,9 +1052,9 @@ experiment "Main-experiment: Playground" type: gui { //TODO: Layout map and char
 		display map type: opengl refresh: every(1 #cycle) draw_env: false background: #black //refresh: every(#hour)
 		{
 			event [mouse_down] action: create_sharing_station;
-			
 			overlay position: { 5, 5 } size: { 240 # px, 680 # px } background: # black transparency: 1.0 border: # black
 			{
+				draw rectangle({0,200}, {1300,2200}) color: #black;
 				rgb text_color <- # white;
 				float y <- 60 # px;
 				draw "Gebäudetypen:" at: { 40 # px, y } color: text_color font: font("Helvetica", 48, # bold) perspective: false;
@@ -1065,7 +1065,8 @@ experiment "Main-experiment: Playground" type: gui { //TODO: Layout map and char
 					draw type at: { 40 # px, y + 10 # px } color: color_per_category[type] font: font("Helvetica", 18 , # none) perspective: false;
 					y <- y + 35 # px;
 				}
-
+				
+				draw rectangle({0,2500}, {1300,4000}) color: #black;
 				y <- y + 60 # px;
 				draw "Mobilitätstypen:" at: { 40 # px, y } color: text_color font: font("Helvetica", 48, # bold) perspective: false;
 				y <- y + 40 # px;
@@ -1078,10 +1079,11 @@ experiment "Main-experiment: Playground" type: gui { //TODO: Layout map and char
 
 				y <- y + 30 # px;
 				
+				draw rectangle({210,4400}, {1480,4850}) color: #black;
 				if(scenario != "Kein Bikesharing")
 				{ 
-					draw ("Use per Bike per Day: " + trips_per_bike_per_day) at: {world.shape.width * 0.05, world.shape.height * 0.94} color: (trips_per_bike_per_day < 4) ? #red : #green;
-					draw ("Average usage per 1000 People: " + trips_per_thousand_per_day) at: {world.shape.width * 0.05, world.shape.height * 0.96} color: (trips_per_thousand_per_day < 30) ? #red : #green;
+					draw ("Fahrten pro Fahrrad: " + trips_per_bike_per_day) at: {world.shape.width * 0.05, world.shape.height * 0.94} font: font("Helvetica", 18) color: (trips_per_bike_per_day < 4) ? #red : #green;
+					draw ("Fahrten pro 1.000 Einwohner: " + trips_per_thousand_per_day) at: {world.shape.width * 0.05, world.shape.height * 0.96} font: font("Helvetica", 18) color: (trips_per_thousand_per_day < 30) ? #red : #green;
 				}
 				draw ("Fahrten angetreten: " + counter_rides) at: {world.shape.width * 0.05, world.shape.height * 0.98} color: #white;
 				draw ("Fahrten beendet: " + counter_succeeded) at: {world.shape.width * 0.05, world.shape.height * 1} color: #white;
@@ -1191,6 +1193,21 @@ experiment "Batch-experiment: Planned vs. random station-distribution" type: bat
     }
 }
 
+// The following experiment is a batch exploration of the model with planned distribution of stations vs. random distribution
+experiment "Batch-experiment: Planned vs. random station-distribution - low density" type: batch autorun: true repeat: 50 keep_seed: true until: (cycle > 1008) skills: [SQLSKILL] {
+       
+	parameter 'Szenario: ' var: scenario among: [ "Wenige Stationen"] unit: 'rate every cycle (1.0 means 100%)';
+	parameter 'Stationsanordnung: ' var: planned_distribution among:[true, false] unit: 'rate every cycle (1.0 means 100%)';
+	
+    reflex end_of_runs {
+    	map<string,float> mean_mode_usage;
+    	loop i from:0 to: length(alltime_transport_type_cumulative_usage)-1{
+    		add (alltime_transport_type_cumulative_usage.keys[i]::((simulations mean_of alltime_transport_type_cumulative_usage.values[i]))/day_counter) to:mean_mode_usage;
+    	}
+		save [scenario, planned_distribution, day_counter, nb_shared_bikes, (simulations mean_of each.trips_per_thousand_per_day), (simulations mean_of each.trips_per_bike_per_day), mean_mode_usage] rewrite: false to: "../results/"+(getCurrentDateTime('yyyy-MM-dd')+"_result_batch_experiment_planned_vs_random_stations_low_density.csv") type: "csv";
+    }
+}
+
 // The following experiment is a batch exploration of two different station-densities (low=1.6 Stations/km2 and mid=13 Stations/km2).
 experiment "Batch-experiment: Density of Stations" type: batch autorun: true repeat: 50 keep_seed: true until: (cycle > 1008) skills: [SQLSKILL] {
        
@@ -1206,9 +1223,9 @@ experiment "Batch-experiment: Density of Stations" type: batch autorun: true rep
     }
 
 // The following experiment is a batch exploration of different amounts of bikes per 1000 inhabitants.
-experiment "Batch-experiment: Number of Bikes" type: batch autorun: true repeat: 10 keep_seed: true until: (cycle > 1008) skills: [SQLSKILL] {
+experiment "Batch-experiment: Number of Bikes" type: batch autorun: true repeat: 25 keep_seed: true until: (cycle > 1008) skills: [SQLSKILL] {
        
-	parameter 'Anzahl der Leihfahrräder (pro 1000 Einwohner): ' var: nb_shared_bikes among: [ 5 , 10 , 15, 20, 25, 30, 35 ] unit: 'rate every cycle (1.0 means 100%)';
+	parameter 'Anzahl der Leihfahrräder (pro 1000 Einwohner): ' var: nb_shared_bikes among: [ 9, 10, 11 ] unit: 'rate every cycle (1.0 means 100%)';
     reflex end_of_runs {
     	map<string,float> mean_mode_usage;
     	loop i from:0 to: length(alltime_transport_type_cumulative_usage)-1{

@@ -25,7 +25,7 @@ global {
 	int nb_inhabitants <- 20000 parameter: "Anzahl der Einwohner: " category: "Voreinstellung";
 	int nb_people <- 1000 parameter: "Anzahl der Personen im Experiment: " min: 100 max: 10000 step: 100 category: "Voreinstellung";
 	int prop_pendler <- 25 parameter: "Anteil der zusätzlichen Einpendler (in%): " min: 0 max: 100 step: 1 category: "Voreinstellung";
-	int nb_shared_bikes <- 10 parameter: "Anzahl der Leihfahrräder (pro 1000 Einwohner): " min: 0 max: 100 step: 1 category: "Voreinstellung";
+	int nb_shared_bikes <- 10 parameter: "Anzahl der Leihfahrräder (pro 1000 Einwohner): " min: 1 max: 100 step: 1 category: "Voreinstellung";
 	//Choice for sharing_station-creation-mode:
 	bool creation_mode <- false parameter: "Stationen auf Karte hinzufügen:" category: "Interaktion";
 	bool disposition_setting <- true parameter: "Nächtliche Disposition durchführen:" category: "Interaktion";
@@ -564,7 +564,6 @@ global {
 		//For bike collection and disposition:
 		list<shared_bike> collector;
 		list<sharing_station> sorted_stations;
-		//TODO: Zähler für Nutzung
 
 		// collect bikes that are too much:
 		action collect_bikes {

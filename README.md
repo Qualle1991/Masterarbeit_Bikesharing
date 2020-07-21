@@ -1,6 +1,6 @@
 # Masterarbeit_Bikesharing
 
-This project is based on the research of Grignard et. al. (2018) and Priebe, Szczepanska, Higi, & Schröder (submitted) and focuses on the phenomenon of bike sharing.  It has been developed in the context of the master thesis "Agent-based modelling of a bike-sharing offer in suburban space" by Pascal Schwerk in 2020.  The GAMA model provides algorithms and logic for researching and simulating different forms of bike sharing and allows for both interactive experiments using the user interface and automated batch experiments.
+This project is based on the research of Grignard et. al. (2018) and Priebe, Szczepanska, Higi, & Schröder (submitted) and focuses on the phenomenon of bike sharing.  It has been developed in the context of the master thesis "Agentenbasierte Modellierung eines Bikesharing-Angebots im suburbanen Raum" (Agent-based modelling of a bike-sharing sheme in suburban area) by Pascal Schwerk in 2020. The GAMA model provides algorithms and logic for researching and simulating different forms of bike sharing and allows for both interactive experiments using the user interface and automated batch experiments. Focus of the existing experiments is the example city of Luckenwalde, which represents a city in the suburban area.
 
 A detailed description of the model can be found in the master thesis. 
 
